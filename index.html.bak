@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta name="build" content="build-2025-08-17-IST-22:05" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>EV Cost Advisor — India</title>
+  <!-- smoke: ui edit OK -->
+<style>
+  :root{
+    --emerald:#10b981; --emerald-600:#059669; --emerald-700:#047857;
+    --ink:#0b1324; --ink-2:#1f2937; --muted:#94a3b8; --white:#fff;
+    --panel:#0d152c; --panel-2:#0b172f; --ring:rgba(16,185,129,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:linear-gradient(180deg,#0a0f1e,#0b1225 40%,#0a0f1e);color:#e5e7eb;font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,Arial,sans-serif}
+  a{color:inherit}
+
+  /* Header */
+  .header{position:sticky;top:0;z-index:40;background:var(--emerald);color:#04110c;box-shadow:0 1px 0 rgba(0,0,0,.06)}
+  .wrap{max-width:1152px;margin:0 auto;padding:10px 14px;display:flex;align-items:center;gap:12px}
+  .brand{font-weight:900;font-size:18px;letter-spacing:.2px}
+  .subtitle{opacity:.9;font-size:12px}
+  .spacer{flex:1}
+  .toolbar{display:flex;gap:8px;align-items:center}
+  .label{font-size:12px;color:#cfe9df}
+  select,input[type=number]{background:#081229;border:1px solid #1f2937;color:#e5e7eb;border-radius:10px;padding:8px 10px}
+
+  /* Tabs */
+  .tabs{max-width:1152px;margin:10px auto 0;display:flex;gap:8px;padding:0 14px}
+  .tab{background:#102041;border:1px solid #24324d;color:#cdd4df;border-radius:999px;padding:8px 14px;font-weight:700;cursor:pointer}
+  .tab.active{background:var(--emerald);color:#04110c;border-color:var(--emerald-600)}
+
+  /* Layout */
+  .layout{max-width:1152px;margin:12px auto;padding:0 14px;display:grid;grid-template-columns:1fr;gap:14px}
+  @media(min-width:980px){.layout{grid-template-columns:1fr 520px}}
+
+  /* Cards */
+  .cards{display:grid;grid-template-columns:1fr;gap:12px}
+  @media(min-width:640px){.cards{grid-template-columns:1fr 1fr}}
+  @media(min-width:980px){.cards{grid-template-columns:1fr 1fr}}
+  .card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:14px;cursor:pointer;transition:transform .12s ease,border-color .12s ease}
+  .card:hover{transform:translateY(-1px);border-color:var(--ring)}
+  .card h3{margin:0 0 6px 0;font-size:15px;color:#f9fafb}
+  .card .meta{font-size:12px;color:#aeb4be}
+
+  /* Side panel & placeholders */
+  .panel{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:14px}
+  .panel.solid{background:#0d152c;border-color:#17203b}
+  #carPhoto img{width:100%;max-width:460px;border-radius:12px;display:block}
+
+  /* Modal (mobile) */
+  #backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:30}
+  .modal-open{overflow:hidden}
+  #calculator{display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(720px,92vw);max-height:86vh;overflow:auto;background:rgba(8,18,41,.96);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:16px;z-index:31;box-shadow:0 10px 40px rgba(0,0,0,.45)}
+  @media(min-width:980px){ #backdrop{display:block;position:static;background:none;backdrop-filter:none}
+    #calculator{display:block;position:sticky;transform:none;top:14px;left:auto;width:auto;max-height:none;background:#0d152c}
+    .modal-open{overflow:auto}
+  }
+
+  .calc-head{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  .calc-head .title{flex:1}
+  .calc-head .actions button{margin-left:6px}
+
+  h2{margin:0 0 2px 0;font:800 18px/1.1 system-ui}
+  h4{margin:10px 0 6px 0;font-weight:800;color:#e5e7eb}
+  .muted{color:#9aa3ae}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .tile{background:#0b172f;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px}
+  .tile.green{background:#0b2a20;border-color:#135f46}
+  .figure{font-size:28px;font-weight:900}
+
+  .chipbar{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+  .chip{background:#0c142a;border:1px solid #25304b;color:#cdd4df;border-radius:999px;padding:6px 10px;font-size:12px;cursor:pointer}
+  .chip.active,.chip:hover{border-color:var(--emerald);color:#fff}
+  button{background:#0f1b36;color:#e5e7eb;border:1px solid #24324d;border-radius:10px;padding:8px 10px;font-weight:700;cursor:pointer}
+  button.primary{background:var(--emerald);border-color:var(--emerald-700);color:#04110c}
+
+  /* Donut */
+  .donut{width:120px;height:120px;border-radius:50%;background:conic-gradient(var(--emerald) var(--pct,60%), rgba(255,255,255,.08) 0)}
+  .donut-inner{position:relative;inset:10px;width:100px;height:100px;margin:auto;border-radius:50%;background:#0d152c;display:flex;align-items:center;justify-content:center;color:#e5e7eb;font-weight:900}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="wrap">
+    <div class="brand">EV Cost Advisor — India</div>
+    <div class="brand">EV Cost Advisor — India · build-2025-08-17-IST-22:05</div>
+    <div class="subtitle">Compare per‑day EV vs petrol • Pick a model → smart calculator</div>
+    <div class="spacer"></div>
+    <div class="toolbar">
+      <label class="label" for="citySelect">City</label>
+      <select id="citySelect" title="City preset"></select>
+      <label class="label" for="petrolInput">Petrol ₹/L</label>
+      <input id="petrolInput" type="number" step="0.1" min="50" max="200" style="width:110px" />
+    </div>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" id="tabCars">Cars</button>
+  <button class="tab" id="tabScooters">Scooters</button>
+</div>
+
+<main class="layout">
+  <section>
+    <div id="cards" class="cards"></div>
+  </section>
+
+  <aside class="panel solid">
+    <div id="carPhoto"></div>
+    <div id="sideTip" class="muted" style="margin-top:8px">Tip: select a model to open the calculator.</div>
+  </aside>
+</main>
+
+<!-- Backdrop for mobile modal -->
+<div id="backdrop"></div>
+
+<!-- Calculator -->
+<div id="calculator">
+  <div class="calc-head">
+    <div class="title">
+      <h2 id="calcModel">—</h2>
+      <div id="calcSubtitle" class="muted"></div>
+    </div>
+    <div class="actions">
+      <button id="btnInfo" title="What is this?">i</button>
+      <button id="btnAI" class="primary" title="5‑sec AI analysis">AI</button>
+      <button id="btnCompare" title="Compare with peers">Compare</button>
+      <button id="btnShare" title="Share summary">Share</button>
+      <button id="btnEMI" title="EMI helper">EMI</button>
+      <button id="btnClose" title="Close">✕</button>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="tile green">
+      <div class="figure" id="perDayEv">₹—</div>
+      <div class="label">COST PER DAY (EV)</div>
+    </div>
+    <div class="tile">
+      <div class="figure" id="perDayPetrol">₹—</div>
+      <div class="label">COST PER DAY (PETROL)</div>
+    </div>
+  </div>
+
+  <!-- Inputs -->
+  <h4 style="margin-top:12px">Kitna Chalaoge / Daily drive (km)</h4>
+  <input id="kmPerDay" type="range" min="5" max="200" step="1" />
+  <div class="chipbar"><span id="kmPerDayVal" class="muted"></span></div>
+
+  <h4>Kitne Din / Days per month</h4>
+  <input id="daysPerMonth" type="range" min="20" max="30" step="1" />
+  <div class="chipbar">
+    <button class="chip" data-days="26">26‑day preset</button>
+    <button class="chip" data-days="30">30‑day month</button>
+    <span id="daysPerMonthVal" class="muted"></span>
+  </div>
+
+  <div class="row">
+    <div class="tile">
+      <div class="figure" id="evPerKm">—</div>
+      <div class="label">EV ₹/km</div>
+    </div>
+    <div class="tile">
+      <div class="figure" id="petrolPerKm">—</div>
+      <div class="label">PETROL ₹/km</div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="tile">
+      <div class="figure" id="monthlyEV">₹—</div>
+      <div class="label">Monthly running cost (EV)</div>
+    </div>
+    <div class="tile">
+      <div class="figure" id="monthlyPetrol">₹—</div>
+      <div class="label">Monthly running cost (Petrol)</div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="tile">
+      <div class="donut" id="saveDonut" style="--pct:60%">
+        <div class="donut-inner"><span id="savePct">—%</span></div>
+      </div>
+      <div class="label" style="margin-top:8px">Savings vs petrol</div>
+    </div>
+    <div class="tile">
+      <div class="figure" id="aiVerdict">—</div>
+      <div class="label">AI verdict (quick)</div>
+    </div>
+  </div>
+
+  <div id="infoArea" class="panel" style="margin-top:10px;display:none">
+    <b>How we calculate</b>
+    <div class="muted" style="margin-top:6px">
+      EV ₹/km = (kWh/100km × tariff) × 1.12 buffer. Petrol ₹/km = ₹/L ÷ km/L (segment benchmark).
+      Tariffs are city‑preset; petrol is editable. EMI is separate (EMI helper).
+    </div>
+  </div>
+
+  <div id="compareArea" class="panel" style="margin-top:10px;display:none"></div>
+
+  <div id="emiArea" class="panel" style="margin-top:10px;display:none">
+    <h4>EMI helper</h4>
+    <div class="row">
+      <div class="tile">
+        <label class="muted">Monthly EMI (₹)</label>
+        <input id="emiInput" type="number" min="0" step="100" style="width:100%;margin-top:6px" />
+      </div>
+      <div class="tile">
+        <div class="donut" id="emiDonut" style="--pct:0%">
+          <div class="donut-inner"><span id="emiPct">0%</span></div>
+        </div>
+        <div class="label" style="margin-top:8px">EMI coverage by savings</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button id="btnEmiShare">Share EMI card</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ====== DATA ====== */
+const CITY_TARIFFS = {
+  "Delhi":6.5, "Mumbai":8.5, "Bengaluru":8.0, "Hyderabad":7.5, "Chennai":8.0,
+  "Pune":7.0, "Gurugram":6.8, "Noida":6.7, "Kolkata":7.0, "Ahmedabad":6.5,
+  "Jaipur":7.0, "Lucknow":7.1, "Chandigarh":6.1, "Bhopal":6.4, "Indore":6.6
+};
+const BENCH_KMPL = { "City car":20, Hatchback:17, "Compact SUV":16, Sedan:16, SUV:14, Crossover:12, "MPV/SUV":15, Scooter:50 };
+
+// Base efficiency by segment (kWh/100km). Used if model lacks explicit value.
+const SEG_EFF = { "City car":11.5, Hatchback:13, "Compact SUV":13.5, Sedan:14, SUV:16, Crossover:15, "MPV/SUV":16.5, Scooter:4 };
+
+// Cars (use your bigger canonical list later)
+const CARS = [
+  {id:'mahindra-be6', brand:'Mahindra', model:'BE 6', price_lakh:18.9, segment:'SUV'},
+  {id:'mahindra-xev9e', brand:'Mahindra', model:'XEV 9e', price_lakh:21.9, segment:'SUV'},
+  {id:'tata-harrier-ev', brand:'Tata', model:'Harrier EV', price_lakh:21.49, segment:'SUV'},
+  {id:'tata-punch-ev', brand:'Tata', model:'Punch EV', price_lakh:9.99, segment:'Compact SUV'},
+  {id:'tata-nexon-ev', brand:'Tata', model:'Nexon EV', price_lakh:12.49, segment:'SUV'},
+  {id:'tata-tiago-ev', brand:'Tata', model:'Tiago EV', price_lakh:7.99, segment:'Hatchback'},
+  {id:'mg-comet-ev', brand:'MG', model:'Comet EV', price_lakh:7.5, segment:'City car'},
+  {id:'byd-atto3', brand:'BYD', model:'Atto 3', price_lakh:24.99, segment:'SUV'},
+  {id:'byd-seal', brand:'BYD', model:'Seal', price_lakh:41.0, segment:'Sedan'},
+  {id:'byd-sealion7', brand:'BYD', model:'Sealion 7', price_lakh:48.9, segment:'SUV'},
+  {id:'hyundai-ioniq5', brand:'Hyundai', model:'Ioniq 5', price_lakh:45.95, segment:'Crossover'},
+  {id:'bmw-ix1-lwb', brand:'BMW', model:'iX1 (LWB)', price_lakh:49.0, segment:'SUV'},
+  {id:'kia-carens-clavis-ev', brand:'Kia', model:'Carens Clavis EV', price_lakh:17.99, segment:'MPV/SUV'},
+  {id:'mg-windsor-ev', brand:'MG', model:'Windsor EV', price_lakh:14.0, segment:'Hatchback'}
+].map(x=>({eff_kwh_per_100km: SEG_EFF[x.segment] || 15, ...x}));
+
+// Scooters (sample)
+const SCOOTERS = [
+  {id:'ola-s1-pro', brand:'Ola', model:'S1 Pro', price_lakh:0.14, segment:'Scooter', eff_kwh_per_100km:4},
+  {id:'ather-450x', brand:'Ather', model:'450X', price_lakh:0.15, segment:'Scooter', eff_kwh_per_100km:4.2},
+  {id:'tvs-iqube', brand:'TVS', model:'iQube', price_lakh:0.11, segment:'Scooter', eff_kwh_per_100km:4.3}
+];
+
+/* ====== STATE ====== */
+const state = {
+  tab:'cars', list:[], selected:null,
+  kmPerDay: 20, daysPerMonth: 26,
+  petrolPrice: 100, tariff: CITY_TARIFFS["Gurugram"],
+};
+
+/* ====== UTIL ====== */
+const INR = (n)=> new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Math.round(n||0));
+const KMPL = (seg)=> BENCH_KMPL[seg] ?? 15;
+const EFF = (m)=> (m.eff_kwh_per_100km ?? SEG_EFF[m.segment] ?? 15);
+
+function perKmEV(model){ return (EFF(model)/100) * state.tariff * 1.12; }
+function perKmICE(model){ return state.petrolPrice / Math.max(1, KMPL(model.segment)); }
+
+/* ====== RENDER ====== */
+function renderTabs(){
+  document.getElementById('tabCars').classList.toggle('active', state.tab==='cars');
+  document.getElementById('tabScooters').classList.toggle('active', state.tab==='scooters');
+}
+function renderCards(){
+  state.list = state.tab==='cars'? CARS : SCOOTERS;
+  const box = document.getElementById('cards');
+  box.innerHTML = state.list.map(m=>`
+    <div class="card" data-id="${m.id}">
+      <h3>${m.brand} ${m.model}</h3>
+      <div class="meta">${m.segment} • Ex-showroom ₹${(m.price_lakh||0).toFixed(2)} lakh</div>
+    </div>`).join('');
+  [...box.querySelectorAll('.card')].forEach(el=>{
+    el.onclick = ()=>{
+      const id = el.getAttribute('data-id');
+      const m = state.list.find(x=>x.id===id);
+      openCalcFor(m);
+    };
+  });
+}
+
+function openCalcFor(m){
+  state.selected = m;
+  document.getElementById('sideTip').style.display='none';
+  document.getElementById('calcModel').textContent = `${m.brand} ${m.model}`;
+  document.getElementById('calcSubtitle').textContent = `₹${(m.price_lakh||0).toFixed(2)} lakh • ${m.segment}`;
+  showCarPhoto(m.brand, m.model);
+  document.getElementById('kmPerDay').value = state.kmPerDay;
+  document.getElementById('daysPerMonth').value = state.daysPerMonth;
+  recalc();
+  openCalculator();
+}
+
+function openCalculator(){
+  if (window.innerWidth<980){
+    document.body.classList.add('modal-open');
+    document.getElementById('backdrop').style.display='block';
+    document.getElementById('calculator').style.display='block';
+  }
+}
+function closeCalculator(){
+  document.body.classList.remove('modal-open');
+  if (window.innerWidth<980){
+    document.getElementById('backdrop').style.display='none';
+    document.getElementById('calculator').style.display='none';
+  }
+}
+
+function recalc(){
+  const m = state.selected; if(!m) return;
+  const perKmE = perKmEV(m), perKmP = perKmICE(m);
+  const perDayE = perKmE * state.kmPerDay;
+  const perDayP = perKmP * state.kmPerDay;
+
+  document.getElementById('perDayEv').textContent = INR(perDayE);
+  document.getElementById('perDayPetrol').textContent = INR(perDayP);
+  document.getElementById('evPerKm').textContent = perKmE.toFixed(1);
+  document.getElementById('petrolPerKm').textContent = perKmP.toFixed(1);
+
+  const mEV = perDayE * state.daysPerMonth;
+  const mP  = perDayP * state.daysPerMonth;
+  document.getElementById('monthlyEV').textContent = INR(mEV);
+  document.getElementById('monthlyPetrol').textContent = INR(mP);
+
+  const save = Math.max(0, mP - mEV);
+  const pct  = (mP>0) ? Math.round((save/mP)*100) : 0;
+  document.getElementById('saveDonut').style.setProperty('--pct', pct+'%');
+  document.getElementById('savePct').textContent = pct + '%';
+
+  document.getElementById('kmPerDayVal').textContent = `${state.kmPerDay} km/day`;
+  document.getElementById('daysPerMonthVal').textContent = `${state.daysPerMonth} days/mo`;
+
+  // EMI live update
+  const emi = +document.getElementById('emiInput')?.value || 0;
+  if (document.getElementById('emiArea').style.display !== 'none') {
+    const cover = (emi>0) ? Math.min(100, Math.round((save/emi)*100)) : 0;
+    document.getElementById('emiDonut').style.setProperty('--pct', cover+'%');
+    document.getElementById('emiPct').textContent = cover + '%';
+  }
+}
+
+/* ====== PHOTO ====== */
+async function showCarPhoto(brand, model){
+  try{
+    const r = await fetch(`/api/car/photo?brand=${encodeURIComponent(brand)}&model=${encodeURIComponent(model)}`);
+    const j = await r.json();
+    const box = document.getElementById('carPhoto');
+    box.innerHTML = j.url ? `<img src="${j.url}" alt="${brand} ${model}">` : '';
+  }catch{ /* ignore */ }
+}
+
+/* ====== AI ====== */
+async function runQuickAI(){
+  if (!state.selected) return;
+  const numbers = { id: state.selected.id, kmPerDay:state.kmPerDay, daysPerMonth:state.daysPerMonth, petrolPerL:state.petrolPrice, tariff:state.tariff };
+  const body = { scenario: numbers, models: state.list };
+  try{
+    const r = await fetch('/api/ai/quick',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    const j = await r.json();
+    document.getElementById('aiVerdict').textContent = (j?.verdict==='best_pick') ? 'Good fit ✅' : 'Try alternative';
+  }catch{ document.getElementById('aiVerdict').textContent = 'Summary ready'; }
+}
+
+/* ====== SHARE ====== */
+function shareCard(isEmi){
+  if (!state.selected) return;
+  const m = state.selected;
+  const perKmE = perKmEV(m), perKmP = perKmICE(m);
+  const perDayE = perKmE*state.kmPerDay, perDayP=perKmP*state.kmPerDay;
+  const mEV = perDayE*state.daysPerMonth, mP=perDayP*state.daysPerMonth;
+  const save=Math.max(0,mP-mEV), pct=(mP>0)?Math.round(save/mP*100):0;
+
+  const W=1080,H=1920, pad=64; const c=document.createElement('canvas'); c.width=W; c.height=H; const g=c.getContext('2d');
+  g.fillStyle="#0b1324"; g.fillRect(0,0,W,H);
+  g.fillStyle= "#10b981"; g.fillRect(0,0,W,220);
+  g.fillStyle="#04110c"; g.font="bold 44px system-ui"; g.fillText("EV Cost Advisor — India", pad, 120);
+  g.fillStyle="#e8f5ef"; g.font="bold 56px system-ui"; g.fillText(`${m.brand} ${m.model}`, pad, 300);
+  g.fillStyle="#a9b5c3"; g.font="28px system-ui"; g.fillText(`City: ${document.getElementById('citySelect').value} • Tariff: ₹${state.tariff}/kWh • Petrol: ₹${state.petrolPrice}/L`, pad, 360);
+  let y=470; g.fillStyle="#cfe9df"; g.font="bold 42px system-ui"; g.fillText(`Per‑day: EV ${INR(perDayE)}  vs  Petrol ${INR(perDayP)}`, pad, y);
+  y+=76; g.fillText(`Monthly: EV ${INR(mEV)}  vs  Petrol ${INR(mP)}`, pad, y);
+  y+=84; g.fillStyle="#8fe6c5"; g.font="bold 48px system-ui"; g.fillText(`Savings vs petrol: ${pct}%`, pad, y);
+  if (isEmi){ const emi = +document.getElementById('emiInput').value||0; const cover = (emi>0)?Math.min(100,Math.round((save/emi)*100)):0; y+=100; g.fillStyle="#e8f5ef"; g.font="bold 46px system-ui"; g.fillText(`EMI coverage by savings: ${cover}%`, pad, y); }
+  g.fillStyle="#7e8ba0"; g.font="26px system-ui"; g.fillText("evcost.netlify.app • Share on WhatsApp", pad, H-48);
+  const link=document.createElement('a'); link.download = isEmi ? 'EV-EMI-share.png' : 'EV-cost-share.png'; link.href=c.toDataURL('image/png'); link.click();
+}
+
+/* ====== WIRE ====== */
+function initCities(){
+  const sel = document.getElementById('citySelect');
+  sel.innerHTML = Object.keys(CITY_TARIFFS).map(c=>`<option>${c}</option>`).join('');
+  sel.value = 'Gurugram';
+  sel.onchange = ()=>{ state.tariff = CITY_TARIFFS[sel.value]; recalc(); };
+  const p = document.getElementById('petrolInput');
+  p.value = state.petrolPrice; p.oninput = ()=>{ state.petrolPrice = +p.value || 0; recalc(); };
+}
+
+// Tabs
+ document.getElementById('tabCars').onclick = ()=>{ state.tab='cars'; renderTabs(); renderCards(); };
+ document.getElementById('tabScooters').onclick = ()=>{ state.tab='scooters'; renderTabs(); renderCards(); };
+
+// Sliders
+ document.getElementById('kmPerDay').oninput = (e)=>{ state.kmPerDay = +e.target.value; recalc(); };
+ document.getElementById('daysPerMonth').oninput = (e)=>{ state.daysPerMonth = +e.target.value; recalc(); };
+ document.querySelectorAll('.chip[data-days]').forEach(b=>{
+   b.onclick = ()=>{ state.daysPerMonth = +b.getAttribute('data-days'); document.getElementById('daysPerMonth').value = state.daysPerMonth; recalc(); };
+ });
+
+// Buttons
+ document.getElementById('btnInfo').onclick = ()=>{ const a=document.getElementById('infoArea'); a.style.display = (a.style.display==='none'?'block':'none'); };
+ document.getElementById('btnCompare').onclick = ()=>{
+   const box = document.getElementById('compareArea'); if (!state.selected) return;
+   const pool = (state.tab==='cars'?CARS:SCOOTERS).filter(x=>x.id!==state.selected.id);
+   const peers = pool.filter(x=>x.segment===state.selected.segment).slice(0,3);
+   box.innerHTML = `<b>Peers</b><div class="muted" style="margin-top:6px">${(peers.length?peers:pool.slice(0,3)).map(p=>`${p.brand} ${p.model}`).join(' • ')}</div>`;
+   box.style.display='block';
+ };
+ document.getElementById('btnEMI').onclick = ()=>{ document.getElementById('emiArea').style.display='block'; recalc(); };
+ document.getElementById('btnEmiShare').onclick = ()=>shareCard(true);
+ document.getElementById('btnShare').onclick = ()=>shareCard(false);
+ document.getElementById('btnAI').onclick = runQuickAI;
+ document.getElementById('btnClose').onclick = closeCalculator;
+
+/* ====== BOOT ====== */
+renderTabs();
+renderCards();
+initCities();
+</script>
+</body>
+</html>

@@ -4,7 +4,7 @@
   "type": "module",
   "engines": { "node": ">=18" },
   "scripts": {
-    "build": "echo \"no build (static)\""
+    "build": "node -e \"console.log('static site — no build step')\""
   },
   "dependencies": {
     "openai": "^4.57.0"
