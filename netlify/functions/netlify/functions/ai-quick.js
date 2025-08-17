@@ -138,6 +138,4 @@ export async function handler(event) {
       key_numbers: numbers, share_line: "Best pick based on monthly EV cost vs peers.",
     });
   }
-
-
 }
