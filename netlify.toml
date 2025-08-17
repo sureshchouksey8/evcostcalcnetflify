@@ -4,5 +4,10 @@
 
 [[redirects]]
   from = "/api/ai/quick"
-  to = "/.netlify/functions/ai-quick"
+  to   = "/.netlify/functions/ai-quick"
+  status = 200
+
+[[redirects]]
+  from = "/api/ai/ping"
+  to   = "/.netlify/functions/ai-ping"
   status = 200
