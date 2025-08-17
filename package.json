@@ -6,8 +6,4 @@
   "dependencies": {
     "openai": "^4.57.0"
   }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 19f6eba830c45a393dd51d2a6db3862cf4c3ba08
