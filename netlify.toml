@@ -11,3 +11,8 @@
   from = "/api/ai/ping"
   to   = "/.netlify/functions/ai-ping"
   status = 200
+
+[[redirects]]
+  from = "/api/car/photo"
+  to   = "/.netlify/functions/car-photo"
+  status = 200
