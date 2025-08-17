@@ -1,1 +1,454 @@
-<!doctype html><meta charset=utf-8><title>placeholder</title>Missing index.html
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>EV Cost Advisor — India</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#fafafa; --card:#ffffff; --ink:#0b1220; --muted:#5f6b7a; --line:#e9edf2;
+    --brand:#0ea36e; --brand-ink:#0a6b4c; --accent:#1070f7; --warn:#f97316; --bad:#e11d48;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial,'Noto Sans',sans-serif;
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  }
+  header{
+    position:sticky; top:0; z-index:20; background:#0f172a; color:#fff;
+    padding:14px 18px; display:flex; align-items:center; gap:12px;
+    box-shadow:0 1px 0 rgba(255,255,255,0.06), 0 1px 0 rgba(0,0,0,.2) inset;
+  }
+  header .title{font-weight:800; letter-spacing:.3px; font-size:18px}
+  header .meta{margin-left:auto; display:flex; gap:8px; align-items:center}
+  .chip{font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.08)}
+  .tabs{display:flex; gap:8px; padding:14px 18px}
+  .tab{padding:8px 12px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--ink); cursor:pointer; font-weight:600}
+  .tab.active{background:var(--ink); color:#fff; border-color:var(--ink)}
+  .bar{display:flex; gap:12px; padding:0 18px 14px; flex-wrap:wrap; align-items:center}
+  .search{flex:1 1 340px}
+  .search input{width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--line); font-size:16px; background:#fff}
+  .grid{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; padding:0 18px 26px}
+  @media (max-width:1100px){ .grid{grid-template-columns:repeat(2,1fr)} }
+  @media (max-width:720px){ .grid{grid-template-columns:1fr} }
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px;
+    display:flex; flex-direction:column; gap:8px; min-height:118px;
+    transition:box-shadow .2s ease, transform .05s ease; cursor:pointer;
+  }
+  .card:hover{box-shadow:0 10px 24px rgba(12,18,32,.08)}
+  .card h3{margin:0; font-size:18px}
+  .card .sub{font-size:13px; color:var(--muted)}
+  .price{font-weight:700; color:var(--brand-ink); font-size:14px}
+  .row{display:flex; align-items:center; justify-content:space-between; gap:12px}
+  .row .left{display:flex; align-items:center; gap:8px}
+  .row input[type=checkbox]{accent-color:var(--brand)}
+  .btn{
+    padding:10px 14px; border-radius:12px; border:1px solid var(--line); background:#fff; cursor:pointer; font-weight:600;
+  }
+  .btn.brand{background:var(--brand); color:#fff; border-color:var(--brand)}
+  .btn.ghost{background:#fff; color:var(--ink)}
+  .btn.small{padding:8px 10px; font-size:13px}
+  /* Modal */
+  .overlay{position:fixed; inset:0; display:none; align-items:flex-start; justify-content:center; background:rgba(0,0,0,.3); padding:20px; z-index:40}
+  .overlay.show{display:flex}
+  .modal{width:min(1100px,100%); background:#fff; border-radius:18px; border:1px solid var(--line); padding:18px; box-shadow:0 24px 64px rgba(12,18,32,.18)}
+  .mhead{display:flex; gap:12px; align-items:flex-start; border-bottom:1px solid var(--line); padding-bottom:12px; margin-bottom:14px}
+  .mhead .title{flex:1 1 auto}
+  .mhead h2{margin:0; font-size:24px}
+  .mhead .sub{margin-top:4px; color:var(--muted); font-size:13px}
+  .mhead .actions{display:flex; gap:8px; align-items:center}
+  .pill{font-size:12px; padding:6px 10px; border-radius:999px; background:#eff7ff; color:#0b63c3; border:1px solid #cfe6ff}
+  .ai-live{background:#ecfdf5; color:#065f46; border-color:#bbf7d0}
+  .ai-fallback{background:#fff1f2; color:#9f1239; border-color:#fecdd3}
+  /* Calculator layout */
+  .calc{display:grid; grid-template-columns:1.1fr .9fr; gap:16px}
+  @media (max-width:900px){ .calc{grid-template-columns:1fr; } }
+  .tile{
+    background:#f6fdf9; border:1px solid #d8f5e9; color:#064e3b;
+    padding:16px; border-radius:16px;
+  }
+  .tile.alt{
+    background:#fff5f5; border-color:#ffe3e3; color:#7f1d1d;
+  }
+  .tile h4{margin:0 0 4px; font-size:14px; letter-spacing:.2px}
+  .tile .big{font-size:56px; font-weight:800; line-height:1}
+  .hint{font-size:12px; color:var(--muted)}
+  .block{background:#fff; border:1px solid var(--line); border-radius:16px; padding:14px}
+  .slider-row{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+  .pills{display:flex; gap:8px}
+  .pillbtn{padding:6px 10px; border-radius:10px; border:1px solid var(--line); background:#fff; cursor:pointer; font-weight:600; font-size:13px}
+  .pillbtn.active{background:var(--ink); color:#fff; border-color:var(--ink)}
+  input[type=range]{width:260px}
+  .bars{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+  @media (max-width:640px){ .bars{grid-template-columns:1fr} }
+  .barbox{background:#fff; border:1px solid var(--line); border-radius:16px; padding:14px}
+  .barrow{display:flex; align-items:center; gap:10px; margin:6px 0}
+  .barrow .label{width:86px; font-size:13px; color:var(--muted)}
+  .barrow .barwrap{flex:1; background:#f2f4f7; height:10px; border-radius:99px; overflow:hidden}
+  .barrow .fill{height:10px; border-radius:99px}
+  .fill.ev{background:linear-gradient(90deg,#14b8a6,#10b981)}
+  .fill.petrol{background:linear-gradient(90deg,#f59e0b,#f97316)}
+  /* Gauge (donut) */
+  .gauge{background:#fff; border:1px solid var(--line); border-radius:16px; padding:14px; text-align:center}
+  .gauge h4{margin:0 0 8px; font-size:14px; color:var(--muted)}
+  .gauge svg{width:220px; height:220px; display:block; margin:0 auto}
+  .gtext{font-weight:800; font-size:36px; fill:#0b1220}
+  .gsub{font-size:12px; fill:#5f6b7a}
+  .muted{color:var(--muted)}
+  .hidden{display:none !important}
+  .flex{display:flex; align-items:center; gap:8px}
+</style>
+</head>
+<body>
+  <header>
+    <div class="title">EV Cost Advisor — India</div>
+    <div class="meta">
+      <span class="chip">Cities preset</span>
+      <span class="chip">Cars & Scooters</span>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" id="tab-cars">Cars</button>
+    <button class="tab" id="tab-scooters">Scooters</button>
+  </div>
+
+  <div class="bar">
+    <div class="search"><input id="q" placeholder="Search brand, model, segment…" /></div>
+    <button id="compareBtn" class="btn ghost small hidden">Compare (0)</button>
+  </div>
+
+  <div id="cards" class="grid"></div>
+
+  <!-- Calculator Modal -->
+  <div class="overlay" id="calcOverlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="calcTitle">
+      <div class="mhead">
+        <div class="title">
+          <h2 id="calcTitle">—</h2>
+          <div class="sub" id="calcSub">—</div>
+        </div>
+        <div class="actions">
+          <span id="aiPill" class="pill ai-fallback hidden">AI: fallback</span>
+          <button id="infoBtn" class="btn ghost small" title="How we calculate">i</button>
+          <button id="aiBtn" class="btn small">5-sec AI analysis</button>
+          <button id="closeBtn" class="btn ghost small">Close</button>
+        </div>
+      </div>
+
+      <div class="calc">
+        <div class="left">
+          <div class="tile" id="tileEv">
+            <h4>Cost per day (EV)</h4>
+            <div class="big" id="perDayEv">—</div>
+            <div class="hint" id="perDayEvHint"></div>
+          </div>
+          <div class="tile alt" id="tilePetrol">
+            <h4>Cost per day (Petrol)</h4>
+            <div class="big" id="perDayPetrol">—</div>
+            <div class="hint" id="perDayPetrolHint"></div>
+          </div>
+
+          <div class="block">
+            <div class="slider-row">
+              <div class="pills">
+                <button class="pillbtn" id="pill30">30 days</button>
+                <button class="pillbtn" id="pill26">26 days</button>
+              </div>
+              <label class="muted">Daily drive (km)</label>
+              <input type="range" id="kmSlider" min="5" max="120" value="20" />
+              <span id="kmVal" style="min-width:36px; font-weight:700;">20</span>
+              <label class="muted">Days / month</label>
+              <input type="range" id="daysSlider" min="10" max="31" value="26" />
+              <span id="daysVal" style="min-width:30px; font-weight:700;">26</span>
+            </div>
+          </div>
+
+          <div class="bars">
+            <div class="barbox">
+              <div style="font-weight:700; margin-bottom:6px;">Monthly running cost</div>
+              <div class="barrow">
+                <div class="label">EV</div>
+                <div class="barwrap"><div class="fill ev" id="mBarEv" style="width:0%"></div></div>
+                <div id="mCostEv" style="width:86px; text-align:right; font-weight:700">—</div>
+              </div>
+              <div class="barrow">
+                <div class="label">Petrol</div>
+                <div class="barwrap"><div class="fill petrol" id="mBarPetrol" style="width:0%"></div></div>
+                <div id="mCostPetrol" style="width:86px; text-align:right; font-weight:700">—</div>
+              </div>
+            </div>
+
+            <div class="barbox">
+              <div style="font-weight:700; margin-bottom:6px;">Yearly running cost</div>
+              <div class="barrow">
+                <div class="label">EV</div>
+                <div class="barwrap"><div class="fill ev" id="yBarEv" style="width:0%"></div></div>
+                <div id="yCostEv" style="width:86px; text-align:right; font-weight:700">—</div>
+              </div>
+              <div class="barrow">
+                <div class="label">Petrol</div>
+                <div class="barwrap"><div class="fill petrol" id="yBarPetrol" style="width:0%"></div></div>
+                <div id="yCostPetrol" style="width:86px; text-align:right; font-weight:700">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="gauge">
+          <h4 id="gaugeTitle">Savings vs Petrol</h4>
+          <svg viewBox="0 0 220 220" aria-hidden="true">
+            <!-- background ring -->
+            <circle cx="110" cy="110" r="90" stroke="#eef2f7" stroke-width="22" fill="none"/>
+            <!-- progress -->
+            <circle id="arc" cx="110" cy="110" r="90"
+              stroke="url(#grad)" stroke-width="22" fill="none"
+              stroke-linecap="round" stroke-dasharray="565 565" stroke-dashoffset="565"
+              transform="rotate(-90 110 110)"/>
+            <defs>
+              <linearGradient id="grad" x1="0" x2="1">
+                <stop offset="0%" stop-color="#10b981"/>
+                <stop offset="100%" stop-color="#14b8a6"/>
+              </linearGradient>
+            </defs>
+            <text id="gPct" x="110" y="112" text-anchor="middle" class="gtext">—</text>
+            <text id="gSub" x="110" y="136" text-anchor="middle" class="gsub">per month</text>
+          </svg>
+        </div>
+      </div>
+
+      <div id="aiPanel" class="block" style="margin-top:14px; display:none">
+        <div class="flex" style="justify-content:space-between;">
+          <div style="font-weight:800">AI verdict</div>
+          <span id="aiSourcePill" class="pill ai-fallback">AI: fallback</span>
+        </div>
+        <div id="aiVerdict" style="margin-top:8px; font-weight:700"></div>
+        <ul id="aiReasons" style="margin:6px 0 0 18px;"></ul>
+        <div id="aiShare" class="muted" style="margin-top:8px;"></div>
+      </div>
+
+      <div id="infoPanel" class="block hidden" style="margin-top:10px">
+        <div style="font-weight:700; margin-bottom:6px">How we compute costs</div>
+        <div class="muted" style="font-size:14px; line-height:1.6">
+          EV ₹/km = (Efficiency kWh/100km ÷ 100) × city tariff (₹/kWh).<br/>
+          Petrol ₹/km = Petrol price (₹/L) ÷ segment benchmark km/L.<br/>
+          No “charging loss” included; simple & transparent.
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ---------- Data (sample; expand freely) ---------- */
+const CITY_PRESETS = {
+  "Delhi": { tariff: 6.5, petrol: 95 }, "Gurugram": { tariff: 7.1, petrol: 96 },
+  "Mumbai": { tariff: 8.2, petrol: 104 }, "Bengaluru": { tariff: 8.0, petrol: 101 },
+  "Chennai": { tariff: 8.0, petrol: 102 }, "Hyderabad": { tariff: 8.2, petrol: 109 },
+};
+
+const BENCH_KMPL = { "City car":20, Hatchback:17, "Compact SUV":16, Sedan:16, SUV:14, Crossover:12, "MPV/SUV":15, Scooter:50 };
+
+const CARS = [
+  { id:"mahindra-be6",brand:"Mahindra",model:"BE 6",segment:"SUV",price_lakh:18.9,eff_kwh_per_100km:18,range_km:450 },
+  { id:"mahindra-xev9e",brand:"Mahindra",model:"XEV 9e",segment:"SUV",price_lakh:21.9,eff_kwh_per_100km:18,range_km:500 },
+  { id:"tata-harrier-ev",brand:"Tata",model:"Harrier EV",segment:"SUV",price_lakh:21.49,eff_kwh_per_100km:17.5,range_km:450 },
+  { id:"tata-punch-ev",brand:"Tata",model:"Punch EV",segment:"Compact SUV",price_lakh:9.99,eff_kwh_per_100km:13.5,range_km:300 },
+  { id:"mg-windsor-ev",brand:"MG",model:"Windsor EV",segment:"Hatchback",price_lakh:14,eff_kwh_per_100km:14.5,range_km:350 },
+  { id:"tata-nexon-ev",brand:"Tata",model:"Nexon EV",segment:"SUV",price_lakh:12.49,eff_kwh_per_100km:16,range_km:325 },
+  { id:"tata-tiago-ev",brand:"Tata",model:"Tiago EV",segment:"Hatchback",price_lakh:7.99,eff_kwh_per_100km:12.5,range_km:250 },
+  { id:"mg-comet-ev",brand:"MG",model:"Comet EV",segment:"City car",price_lakh:7.5,eff_kwh_per_100km:11.5,range_km:230 },
+  { id:"byd-atto-3",brand:"BYD",model:"Atto 3",segment:"SUV",price_lakh:24.99,eff_kwh_per_100km:16.5,range_km:420 },
+  { id:"byd-seal",brand:"BYD",model:"Seal",segment:"Sedan",price_lakh:41.0,eff_kwh_per_100km:17,range_km:650 },
+  { id:"byd-sealion-7",brand:"BYD",model:"Sealion 7",segment:"SUV",price_lakh:48.9,eff_kwh_per_100km:18,range_km:610 },
+  { id:"hyundai-ioniq5",brand:"Hyundai",model:"Ioniq 5",segment:"Crossover",price_lakh:45.95,eff_kwh_per_100km:18.5,range_km:480 },
+  { id:"bmw-ix1",brand:"BMW",model:"iX1 (LWB)",segment:"MPV/SUV",price_lakh:49.0,eff_kwh_per_100km:20,range_km:450 },
+  { id:"kia-clavis-ev",brand:"Kia",model:"Clavis EV",segment:"MPV/SUV",price_lakh:17.99,eff_kwh_per_100km:16.8,range_km:450 }
+];
+
+const SCOOTERS = [
+  { id:"ola-s1-pro",brand:"Ola",model:"S1 Pro",segment:"Scooter",price_lakh:0.14,eff_kwh_per_100km:4.8,range_km:180 },
+  { id:"ather-450x",brand:"Ather",model:"450X",segment:"Scooter",price_lakh:0.15,eff_kwh_per_100km:5.2,range_km:150 },
+  { id:"tvs-iqube",brand:"TVS",model:"iQube",segment:"Scooter",price_lakh:0.12,eff_kwh_per_100km:5.5,range_km:140 },
+  { id:"bajaj-chetak",brand:"Bajaj",model:"Chetak",segment:"Scooter",price_lakh:0.12,eff_kwh_per_100km:5.6,range_km:130 }
+];
+
+let ACTIVE_TAB = "cars";
+let DATA = CARS.slice();
+let FILTER = "";
+
+/* ---------- Utilities ---------- */
+const INR = n => new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Math.round(n));
+const compact = n => new Intl.NumberFormat("en-IN",{notation:"compact",maximumFractionDigits:0}).format(Math.round(n));
+const el = sel => document.querySelector(sel);
+
+function calcCosts(model, kmPerDay=20, daysPerMonth=26, tariff=7, petrolPerL=100){
+  const evPerKm = (model.eff_kwh_per_100km/100) * tariff; // simple, no loss factor
+  const kmpl = BENCH_KMPL[model.segment] ?? 15;
+  const icePerKm = petrolPerL / Math.max(1, kmpl);
+  const perDayEV = evPerKm * kmPerDay;
+  const perDayICE = icePerKm * kmPerDay;
+  const monthlyEV = perDayEV * daysPerMonth;
+  const monthlyICE = perDayICE * daysPerMonth;
+  const yearlyEV = monthlyEV * 12;
+  const yearlyICE = monthlyICE * 12;
+  return { perDayEV, perDayICE, monthlyEV, monthlyICE, yearlyEV, yearlyICE };
+}
+
+function renderCards(){
+  const wrap = el("#cards"); wrap.innerHTML = "";
+  const rows = DATA.filter(m=>{
+    const s = `${m.brand} ${m.model} ${m.segment}`.toLowerCase();
+    return !FILTER || s.includes(FILTER);
+  });
+  rows.forEach(m=>{
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="row">
+        <div class="left">
+          <h3>${m.brand} ${m.model}</h3>
+        </div>
+        <label class="left" style="font-size:12px; color:var(--muted);">
+          <input type="checkbox" data-id="${m.id}" class="cmp"> Compare
+        </label>
+      </div>
+      <div class="sub">${m.segment} • est. range ${m.range_km} km</div>
+      <div class="price">Ex-showroom: ₹${(m.price_lakh).toLocaleString("en-IN",{maximumFractionDigits:2})} Lakh</div>
+    `;
+    card.addEventListener("click", (e)=>{
+      if (e.target.classList.contains("cmp")) return; // ignore compare toggle
+      openCalc(m);
+    });
+    wrap.appendChild(card);
+  });
+  updateCompareCount();
+}
+
+function updateCompareCount(){
+  const n = [...document.querySelectorAll(".cmp:checked")].length;
+  const btn = el("#compareBtn");
+  btn.textContent = `Compare (${n})`;
+  btn.classList.toggle("hidden", n===0);
+}
+
+/* ---------- Calculator ---------- */
+let currentModel = null;
+let currentCity = "Gurugram";
+let petrol = CITY_PRESETS[currentCity].petrol;
+let tariff = CITY_PRESETS[currentCity].tariff;
+
+function openCalc(model){
+  currentModel = model;
+  el("#calcTitle").textContent = `${model.brand} ${model.model}`;
+  el("#calcSub").textContent = `${model.segment} • est. ${model.range_km} km • Ex-showroom ₹${(model.price_lakh).toLocaleString("en-IN",{maximumFractionDigits:2})} Lakh • City ${currentCity}`;
+  el("#calcOverlay").classList.add("show");
+  el("#aiPanel").style.display = "none";
+  el("#aiPill").classList.add("hidden");
+  recompute();
+}
+
+function recompute(){
+  if (!currentModel) return;
+  const km = +el("#kmSlider").value;
+  const days = +el("#daysSlider").value;
+  el("#kmVal").textContent = km;
+  el("#daysVal").textContent = days;
+
+  const c = calcCosts(currentModel, km, days, tariff, petrol);
+
+  el("#perDayEv").textContent = INR(c.perDayEV);
+  el("#perDayEvHint").textContent = `For ${km} km/day`;
+  el("#perDayPetrol").textContent = INR(c.perDayICE);
+  el("#perDayPetrolHint").textContent = `For ${km} km/day`;
+
+  const maxM = Math.max(c.monthlyEV, c.monthlyICE, 1);
+  el("#mBarEv").style.width = `${(c.monthlyEV/maxM)*100}%`;
+  el("#mBarPetrol").style.width = `${(c.monthlyICE/maxM)*100}%`;
+  el("#mCostEv").textContent = INR(c.monthlyEV);
+  el("#mCostPetrol").textContent = INR(c.monthlyICE);
+
+  const maxY = Math.max(c.yearlyEV, c.yearlyICE, 1);
+  el("#yBarEv").style.width = `${(c.yearlyEV/maxY)*100}%`;
+  el("#yBarPetrol").style.width = `${(c.yearlyICE/maxY)*100}%`;
+  el("#yCostEv").textContent = INR(c.yearlyEV);
+  el("#yCostPetrol").textContent = INR(c.yearlyICE);
+
+  // Gauge
+  const save = Math.max(0, c.monthlyICE - c.monthlyEV);
+  const pct = Math.max(0, Math.min(100, (save / Math.max(1, c.monthlyICE)) * 100));
+  const C = 2*Math.PI*90; // circumference
+  el("#arc").setAttribute("stroke-dashoffset", String(C - (C * pct/100)));
+  el("#gPct").textContent = `${Math.round(pct)}%`;
+  el("#gSub").textContent = `${INR(save)} saved / month`;
+  el("#gaugeTitle").textContent = "Savings vs Petrol";
+}
+
+function closeCalc(){ el("#calcOverlay").classList.remove("show"); }
+
+function city(n){ const s = CITY_PRESETS[n]; if (s){ currentCity=n; tariff=s.tariff; petrol=s.petrol; recompute(); }}
+
+/* ---------- AI hook ---------- */
+async function runAi(){
+  if (!currentModel) return;
+  const km = +el("#kmSlider").value;
+  const days = +el("#daysSlider").value;
+
+  const scenario = { id: currentModel.id, kmPerDay: km, daysPerMonth: days, petrolPerL: petrol, tariff, emi: 0 };
+  const peers = pickPeers(currentModel, DATA); // deterministic peers used for context
+  const models = [currentModel, ...peers];
+
+  const r = await fetch('/api/ai/quick', { // redirected by netlify.toml
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ scenario, models })
+  });
+  const ai = await r.json();
+
+  const pill = el("#aiSourcePill");
+  pill.textContent = ai.source === "openai" ? "AI: OpenAI live" : "AI: fallback";
+  pill.className = "pill " + (ai.source==="openai" ? "ai-live" : "ai-fallback");
+  el("#aiPill").classList.remove("hidden");
+  el("#aiPill").textContent = pill.textContent;
+
+  // render verdict
+  el("#aiPanel").style.display = "block";
+  el("#aiVerdict").textContent = ai.verdict || "";
+  const ul = el("#aiReasons"); ul.innerHTML = "";
+  (ai.reasons||[]).slice(0,3).forEach(s=>{
+    const li = document.createElement("li"); li.textContent = s; ul.appendChild(li);
+  });
+  el("#aiShare").textContent = ai.share_line || "";
+}
+
+function pickPeers(model, all){
+  // same segment & ±15% price; else nearest 3 by price
+  const same = all.filter(x => x.id!==model.id && x.segment===model.segment && Math.abs(x.price_lakh-model.price_lakh)<=model.price_lakh*0.15);
+  const list = same.length ? same : all.filter(x=>x.id!==model.id).sort((a,b)=>Math.abs(a.price_lakh-model.price_lakh)-Math.abs(b.price_lakh-model.price_lakh)).slice(0,3);
+  return list;
+}
+
+/* ---------- Events ---------- */
+document.addEventListener("input", e=>{
+  if (e.target.id==="q"){ FILTER = e.target.value.trim().toLowerCase(); renderCards(); }
+  if (e.target.id==="kmSlider" || e.target.id==="daysSlider"){ recompute(); }
+  if (e.target.classList.contains("cmp")) updateCompareCount();
+});
+el("#tab-cars").addEventListener("click",()=>{ ACTIVE_TAB="cars"; DATA=CARS.slice(); document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active")); el("#tab-cars").classList.add("active"); renderCards(); });
+el("#tab-scooters").addEventListener("click",()=>{ ACTIVE_TAB="scooters"; DATA=SCOOTERS.slice(); document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active")); el("#tab-scooters").classList.add("active"); renderCards(); });
+
+el("#pill30").addEventListener("click",()=>{ el("#daysSlider").value=30; el("#pill30").classList.add("active"); el("#pill26").classList.remove("active"); recompute(); });
+el("#pill26").addEventListener("click",()=>{ el("#daysSlider").value=26; el("#pill26").classList.add("active"); el("#pill30").classList.remove("active"); recompute(); });
+
+el("#aiBtn").addEventListener("click", runAi);
+el("#infoBtn").addEventListener("click", ()=> el("#infoPanel").classList.toggle("hidden"));
+el("#closeBtn").addEventListener("click", closeCalc);
+el("#calcOverlay").addEventListener("click", (e)=>{ if (e.target===el("#calcOverlay")) closeCalc(); });
+
+/* ---------- Init ---------- */
+renderCards();
+</script>
+</body>
+</html>
