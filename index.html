@@ -6,7 +6,7 @@
 <title>EV Cost Advisor — India (AI-ready)</title>
 <style>
   :root{
-    --bg:#f6f7fb; --card:#fff; --text:#0b1220; --muted:#334155; --line:rgba(15,23,42,.14);
+    --bg:#f7f8fc; --card:#fff; --text:#0b1220; --muted:#334155; --line:rgba(15,23,42,.14);
     --soft:#f1f5f9; --ring:#e2e8f0; --ok:#16a34a; --bad:#dc2626; --accent:#0ea5e9;
   }
   *{box-sizing:border-box}
@@ -14,7 +14,7 @@
   body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:var(--text);background:#fff;font-size:17px;line-height:1.5}
 
   /* layout spacing (more breathing room) */
-  .container{max-width:1200px;margin:0 auto;padding:28px 20px 110px}
+  #app{max-width:1200px;margin:0 auto;padding:28px 20px 110px}
   h1{margin:0;font-size:clamp(28px,3.5vw,38px);font-weight:900;background:linear-gradient(90deg,#16a34a,#0ea5e9);-webkit-background-clip:text;background-clip:text;color:transparent}
   .subtitle{color:var(--muted);font-size:clamp(14px,2vw,16px);margin-top:10px}
   .row{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap}
@@ -45,20 +45,30 @@
   .badge-btn{cursor:pointer}
   .button{border:none;background:#0f172a;color:#e5e7eb;border:1px solid rgba(15,23,42,.18);padding:11px 16px;border-radius:12px;cursor:pointer;font-weight:700}
   .button.primary{background:#16a34a;border-color:rgba(22,163,74,.4);color:#052e16}
+  .button.ghost{background:#fff;color:#0f172a;border:1px solid var(--ring)}
   .ring{border:1px solid var(--ring)}
 
-  /* Modal */
-  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:50;padding:10px}
+  /* Overlay + modal (Phase A) */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);display:none;align-items:flex-end;justify-content:center;z-index:50;padding:10px}
   .overlay.show{display:flex}
-  .modal{width:min(1200px,98vw);max-height:92vh;display:flex;flex-direction:column;background:#fff;color:var(--text);border:1px solid var(--ring);border-radius:22px;overflow:hidden;box-shadow:0 24px 70px rgba(2,6,23,.32)}
-  @media(max-width:640px){.modal{width:100vw;height:100vh;max-height:none;border-radius:18px}}
-  .modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--ring);background:var(--soft);gap:12px;flex-wrap:wrap}
+  .overlay .modal{
+    width:min(1200px,98vw);max-height:92vh;display:flex;flex-direction:column;background:#fff;color:var(--text);
+    border:1px solid var(--ring);border-radius:22px 22px 0 0;overflow:hidden;box-shadow:0 24px 70px rgba(2,6,23,.32);
+    transform:translateY(0); will-change:transform;
+  }
+  /* Desktop: centered, larger paddings */
+  @media(min-width:1024px){
+    .overlay{align-items:center}
+    .overlay .modal{border-radius:22px;max-height:92vh}
+  }
+  .modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--ring);background:var(--soft);gap:12px;flex-wrap:wrap}
+  .modal-head .left, .modal-head .right{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   .modal-body{padding:18px 18px 26px;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y}
 
   .grid3{display:grid;grid-template-columns:1fr;gap:22px}
   @media(min-width:1024px){.grid3{grid-template-columns:1.2fr 1.6fr 1.1fr}}
 
-  .input,select{width:100%;border-radius:14px;padding:12px 12px;background:#fff;border:1px solid var(--line);color:var(--text);font-size:16px}
+  .input,select{width:100%;border-radius:14px;padding:12px 12px;background:#fff;border:1px solid var(--line);color:#0f172a;font-size:16px}
   .tile{border-radius:20px;padding:20px;color:#fff}
   .tile.ev{background:#059669} .tile.ice{background:#dc2626}
   .tile .big{font-size:clamp(44px,5.2vw,60px);font-weight:900;margin-top:4px}
@@ -81,33 +91,26 @@
 
   .tabnums{font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
 
-  /* Tools (solid colours) */
-  .toolsGrid{display:grid;grid-template-columns:1fr;gap:18px}
-  @media(min-width:800px){.toolsGrid{grid-template-columns:1fr 1fr}}
-  .toolTile{border-radius:20px;padding:20px;color:#fff;border:1px solid rgba(255,255,255,.25)}
-  .toolTile h3{margin:0 0 10px 0;font-size:15px;letter-spacing:.12em;text-transform:uppercase;opacity:.95}
-  .toolTile .row{align-items:flex-end}
-  .toolTile .value{font-size:28px;font-weight:900}
-  .toolTile .caption{font-size:13px;opacity:.97}
-  .toolTile input{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.45);color:#fff}
-  .toolTile.emi{background:linear-gradient(135deg,#0ea5e9,#22d3ee)}
-  .toolTile.litres{background:linear-gradient(135deg,#10b981,#059669)}
-
-  #aiPanel{margin-top:12px;border:1px dashed var(--ring);padding:12px;border-radius:12px;background:#f8fafc;display:none}
-  #aiPanel.good{border-color:#a7f3d0;background:#ecfdf5}
-  #aiPanel.try{border-color:#fde68a;background:#fffbeb}
-
-  /* optional model photo (shows above gauge if present) */
-  #modelPhoto{
-    width:100%;max-height:220px;object-fit:cover;border-radius:14px;display:none;border:1px solid var(--ring);
-  }
+  /* Optional model photo */
+  #modelPhoto{width:100%;max-height:220px;object-fit:cover;border-radius:14px;display:none;border:1px solid var(--ring)}
 
   .mt4{margin-top:4px}.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}
   .mt20{margin-top:20px}.mt24{margin-top:24px}
+
+  /* Compare carousel (Phase B) */
+  .carousel{position:relative;overflow:hidden}
+  .track{display:flex;gap:16px;transition:transform .35s ease}
+  .slide{flex:0 0 90%;max-width:90%;border:1px solid var(--ring);border-radius:16px;background:#fff;padding:14px}
+  @media(min-width:640px){.slide{flex-basis:520px;max-width:520px}}
+  .slide h3{margin:0 0 6px 0;font-size:18px}
+  .navArrows{display:flex;gap:10px;justify-content:center;margin-top:12px}
+  .navArrows .button{min-width:44px}
+
+  .ghosty{opacity:.9}
 </style>
 </head>
 <body>
-  <div class="container">
+  <div id="app">
     <div class="row">
       <div>
         <h1>EV Cost Advisor — India</h1>
@@ -131,18 +134,20 @@
     <div id="grid" class="grid"></div>
   </div>
 
-  <!-- Calculator Modal -->
+  <!-- Calculator Modal (Phase A) -->
   <div id="overlay" class="overlay" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true">
+    <div id="calcModal" class="modal" role="dialog" aria-modal="true">
       <div class="modal-head">
-        <div class="row" style="gap:10px">
+        <div class="left">
           <button id="infoBtn" class="badge-btn" title="How this is calculated">i Info</button>
-          <button id="emiBtn" class="button">EMI</button>
+          <button id="emiBtn" class="button ghost">EMI</button>
           <button id="aiBtn" class="button" title="AI suggestion">✨ AI Analysis</button>
         </div>
-        <div class="row">
+        <div class="right">
+          <select id="modelSwitch" title="Switch model"></select>
+          <button id="compareBtn" class="button ghost" title="Compare alternatives">Compare</button>
           <button id="shareBtn" class="button">Share</button>
-          <button id="closeBtn" class="button">Close</button>
+          <button id="closeBtn" class="button" title="Close (Esc)">✕</button>
         </div>
       </div>
       <div class="modal-body">
@@ -166,9 +171,17 @@
               <label class="small muted">Petrol price (₹/L)</label>
               <input id="petrolIn" type="number" class="input mt8" value="100" />
             </div>
+
+            <div class="mt16">
+              <label class="small muted">Days per month</label>
+              <div class="row" style="justify-content:flex-start;gap:10px;align-items:center">
+                <input id="daysRange" type="range" min="15" max="31" step="1" value="26" style="flex:1" />
+                <div class="badge tabnums" id="daysBadge">26 days</div>
+              </div>
+            </div>
           </div>
 
-          <!-- Center: tiles + days slider + stats -->
+          <!-- Center: tiles + stats -->
           <div>
             <div class="row" style="justify-content:flex-start;gap:10px"><span class="badge">Kitna Kharchoge?</span></div>
             <div class="tile ev mt8">
@@ -180,15 +193,6 @@
               <div class="small" style="letter-spacing:.12em;text-transform:uppercase;opacity:.95">Cost per day (Petrol)</div>
               <div id="perDayIce" class="big tabnums">—</div>
               <div class="small" id="kmNoteIce">For 20 km/day</div>
-            </div>
-
-            <!-- Days slider -->
-            <div class="mt20" id="daysBlockCenter">
-              <div class="row" style="gap:10px;align-items:center">
-                <label class="small muted">Days per month</label>
-                <div class="badge tabnums" id="daysBadge">26 days</div>
-              </div>
-              <input id="daysRange" type="range" min="1" max="31" step="1" value="26" class="mt8" />
             </div>
 
             <div class="row mt24">
@@ -205,7 +209,7 @@
             </div>
           </div>
 
-          <!-- Right: (optional) photo + savings circle + model info + AI panel -->
+          <!-- Right: photo + savings circle + model info + AI panel -->
           <div class="right-rail">
             <img id="modelPhoto" alt="">
             <svg class="gauge" viewBox="0 0 120 120">
@@ -236,7 +240,31 @@
     </div>
   </div>
 
-  <!-- Share Modal -->
+  <!-- Compare Modal (Phase B) -->
+  <div id="compareOverlay" class="overlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-head">
+        <div class="left">
+          <div class="badge ghosty">Compare alternatives</div>
+        </div>
+        <div class="right">
+          <button id="compareClose" class="button">✕</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div id="compareSummary" class="small muted mt4"></div>
+        <div class="carousel mt12">
+          <div id="compareTrack" class="track"></div>
+        </div>
+        <div class="navArrows">
+          <button id="prevSlide" class="button ghost">←</button>
+          <button id="nextSlide" class="button ghost">→</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Share Modal (kept simple, same as before) -->
   <div id="shareOverlay" class="overlay" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true">
       <div class="modal-head">
@@ -256,96 +284,439 @@
     </div>
   </div>
 
-  <!-- EMI + Litres Modal -->
-  <div id="toolsOverlay" class="overlay" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true">
-      <div class="modal-head">
-        <div class="muted small">EMI & Litres Saved</div>
-        <div class="row"><button id="toolsInfo" class="button">Info</button><button id="shareEmi" class="button">Share EMI card</button><button id="toolsClose" class="button">Close</button></div>
-      </div>
-      <div class="modal-body">
-        <div class="toolsGrid">
-          <div class="toolTile emi">
-            <h3>EMI helper</h3>
-            <div class="row mt8" style="align-items:center">
-              <svg class="gauge" viewBox="0 0 120 120" style="margin-right:8px">
-                <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="12"/>
-                <g transform="rotate(-90 60 60)">
-                  <circle id="emiProg" cx="60" cy="60" r="50" fill="none" stroke="#ffffff" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 314"/>
-                </g>
-                <text id="emiLabel" x="60" y="56" text-anchor="middle" fill="#fff" font-size="20" font-weight="800">—</text>
-                <text x="60" y="78" text-anchor="middle" fill="rgba(255,255,255,.95)" font-size="12">EMI coverage</text>
-              </svg>
-              <div style="flex:1"></div>
-            </div>
-            <div class="row mt8">
-              <div style="flex:1">
-                <div class="small">Loan amount (₹)</div>
-                <input id="emiAmount" class="input mt8" type="number" placeholder="500000" />
-              </div>
-              <div style="width:140px">
-                <div class="small">Interest %</div>
-                <input id="emiRate" class="input mt8" type="number" step="0.1" placeholder="9.5" />
-              </div>
-              <div style="width:160px">
-                <div class="small">Months</div>
-                <input id="emiMonths" class="input mt8" type="number" placeholder="60" />
-              </div>
-            </div>
-            <div class="row mt16">
-              <div>
-                <div class="small">EMI / month</div>
-                <div id="emiOut" class="value tabnums">—</div>
-              </div>
-              <div>
-                <div class="small">Fuel savings / month</div>
-                <div id="savingsOut" class="value tabnums">—</div>
-              </div>
-            </div>
-            <div id="emiTip" class="small mt12" style="opacity:.9">Enter values to compare your EMI vs monthly fuel savings.</div>
-          </div>
-
-          <div class="toolTile litres">
-            <h3>Litres saved / month</h3>
-            <div class="row mt8">
-              <div>
-                <div class="small">Your monthly km</div>
-                <div id="lsKm" class="value tabnums">—</div>
-              </div>
-              <div>
-                <div class="small">Segment km/L</div>
-                <div id="lsKmpl" class="value tabnums">—</div>
-              </div>
-            </div>
-            <div class="mt16">
-              <div class="small">Estimated petrol you avoid each month</div>
-              <div id="lsLitres" class="value tabnums" style="font-size:32px">—</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Info Modal -->
   <div id="infoOverlay" class="overlay" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true">
       <div class="modal-head">
-        <div class="muted small" id="infoTitle">Info</div>
+        <div class="muted small" id="infoTitle">How we calculate</div>
         <div class="row"><button id="infoClose" class="button">Close</button></div>
       </div>
       <div class="modal-body">
-        <div id="infoContent" class="stat" style="max-width:820px;margin:auto;font-size:16px"></div>
+        <div id="infoContent" class="stat" style="max-width:820px;margin:auto;font-size:16px">
+          <div class="bold">Simple & transparent</div>
+          <ul class="small">
+            <li><b>EV ₹/km</b> = (kWh/100km ÷ 100) × tariff × 1.12 (GST approx).</li>
+            <li><b>Petrol ₹/km</b> = Petrol ₹/L ÷ segment km/L benchmark.</li>
+            <li>Monthly = Per-day × days/month (<b>26</b> default, adjustable).</li>
+            <li>City presets set tariff & petrol automatically (you can edit petrol).</li>
+          </ul>
+          <div class="small mt12">Benchmarks are typical real-world figures; your results may vary with driving style, AC usage, traffic, etc.</div>
+        </div>
       </div>
     </div>
   </div>
 
 <script>
 (function(){
-  // -------- Data
+  /* ---------- Data ---------- */
   const BENCH_KMPL = {"City car":20,"Hatchback":17,"Compact SUV":16,"Sedan":16,"SUV":14,"Crossover":12,"MPV/SUV":15,"Scooter":50};
 
-  // Cars (≤ ₹50L ex-showroom) — sample set
   const MODELS_CARS=[
-    {id:"mahindra-be6",brand:"Mahindra",model:"BE 6",price_lakh:18.90,segment:"SUV",eff_kwh_per_100km:16.5,range_km:557},
-    {id:"mahindra-xev9e",brand:"Mahindra",model:"XEV 9e",price_lakh:21.90,segment:"SUV",eff_kwh_per_100km:17.0,range_km:542},
+    {id:"mahindra-be6",brand:"Mahindra",model:"BE 6",price_lakh:18.90,segment:"SUV",eff_kwh_per_100km:16.5,range_km:557,type:"car"},
+    {id:"mahindra-xev9e",brand:"Mahindra",model:"XEV 9e",price_lakh:21.90,segment:"SUV",eff_kwh_per_100km:17.0,range_km:542,type:"car"},
+    {id:"tata-harrier-ev",brand:"Tata",model:"Harrier EV",price_lakh:21.49,segment:"SUV",eff_kwh_per_100km:18.5,range_km:538,type:"car"},
+    {id:"tata-punch-ev",brand:"Tata",model:"Punch EV",price_lakh:9.99,segment:"Compact SUV",eff_kwh_per_100km:13.5,range_km:315,type:"car"},
+    {id:"mg-windsor-ev",brand:"MG",model:"Windsor EV",price_lakh:17.00,segment:"Hatchback",eff_kwh_per_100km:14.0,range_km:350,type:"car"},
+    {id:"tata-nexon-ev",brand:"Tata",model:"Nexon EV",price_lakh:12.49,segment:"SUV",eff_kwh_per_100km:16.0,range_km:489,type:"car"},
+    {id:"tata-tiago-ev",brand:"Tata",model:"Tiago EV",price_lakh:7.99,segment:"Hatchback",eff_kwh_per_100km:13.0,range_km:223,type:"car"},
+    {id:"mg-comet-ev",brand:"MG",model:"Comet EV",price_lakh:7.50,segment:"City car",eff_kwh_per_100km:11.0,range_km:230,type:"car"},
+    {id:"byd-atto3",brand:"BYD",model:"Atto 3",price_lakh:24.99,segment:"SUV",eff_kwh_per_100km:17.5,range_km:420,type:"car"},
+    {id:"byd-seal",brand:"BYD",model:"Seal",price_lakh:41.00,segment:"Sedan",eff_kwh_per_100km:15.5,range_km:650,type:"car"},
+    {id:"byd-sealion7",brand:"BYD",model:"Sealion 7",price_lakh:48.90,segment:"SUV",eff_kwh_per_100km:18.0,range_km:610,type:"car"},
+    {id:"hy-ioniq5",brand:"Hyundai",model:"Ioniq 5",price_lakh:45.95,segment:"Crossover",eff_kwh_per_100km:17.0,range_km:631,type:"car"},
+    {id:"bmw-ix1-lwb",brand:"BMW",model:"iX1 (LWB)",price_lakh:49.00,segment:"SUV",eff_kwh_per_100km:18.0,range_km:531,type:"car"},
+    {id:"kia-carens-clavis-ev",brand:"Kia",model:"Carens Clavis EV",price_lakh:17.99,segment:"MPV/SUV",eff_kwh_per_100km:16.5,range_km:404,type:"car"},
+    {id:"mg-zs-ev",brand:"MG",model:"ZS EV",price_lakh:23.00,segment:"SUV",eff_kwh_per_100km:17.0,range_km:461,type:"car"},
+    {id:"citroen-ec3",brand:"Citroën",model:"eC3",price_lakh:11.60,segment:"Hatchback",eff_kwh_per_100km:16.0,range_km:320,type:"car"},
+    {id:"tata-tigor-ev",brand:"Tata",model:"Tigor EV",price_lakh:12.49,segment:"Sedan",eff_kwh_per_100km:13.8,range_km:315,type:"car"},
+    {id:"mahindra-xuv400",brand:"Mahindra",model:"XUV400",price_lakh:16.00,segment:"SUV",eff_kwh_per_100km:16.5,range_km:375,type:"car"},
+    {id:"byd-e6",brand:"BYD",model:"e6",price_lakh:29.15,segment:"MPV/SUV",eff_kwh_per_100km:15.5,range_km:520,type:"car"},
+    {id:"hyundai-kona",brand:"Hyundai",model:"Kona Electric",price_lakh:24.00,segment:"SUV",eff_kwh_per_100km:15.8,range_km:484,type:"car"}
+  ];
+
+  const MODELS_SCOOTERS=[
+    {id:"ola-s1-pro",brand:"Ola",model:"S1 Pro",price_lakh:1.36,segment:"Scooter",eff_kwh_per_100km:5.5,range_km:242,type:"scooter"},
+    {id:"ola-s1-x",brand:"Ola",model:"S1 X",price_lakh:1.00,segment:"Scooter",eff_kwh_per_100km:5.0,range_km:125,type:"scooter"},
+    {id:"ather-450x",brand:"Ather",model:"450X",price_lakh:1.64,segment:"Scooter",eff_kwh_per_100km:5.0,range_km:161,type:"scooter"},
+    {id:"tvs-iqube",brand:"TVS",model:"iQube",price_lakh:1.05,segment:"Scooter",eff_kwh_per_100km:5.0,range_km:145,type:"scooter"},
+    {id:"bajaj-chetak",brand:"Bajaj",model:"Chetak",price_lakh:1.22,segment:"Scooter",eff_kwh_per_100km:5.2,range_km:113,type:"scooter"}
+  ];
+
+  // City presets
+  const STATE_BENCH={
+    "Delhi":{petrol:95,tariff:6.0}, "Maharashtra":{petrol:105,tariff:8.0}, "Karnataka":{petrol:104,tariff:7.0},
+    "Tamil Nadu":{petrol:102,tariff:6.5}, "West Bengal":{petrol:106,tariff:8.0}, "Telangana":{petrol:107,tariff:7.5},
+    "Kerala":{petrol:107,tariff:7.2}, "Gujarat":{petrol:95,tariff:7.1}, "Rajasthan":{petrol:105,tariff:8.1}, "Punjab":{petrol:98,tariff:6.5},
+    "Haryana":{petrol:96,tariff:6.8}, "Uttar Pradesh":{petrol:95,tariff:6.7}, "Madhya Pradesh":{petrol:107,tariff:7.8}, "Chandigarh":{petrol:97,tariff:6.4}
+  };
+  const CITY_TO_STATE={
+    "Delhi":"Delhi","New Delhi":"Delhi","Mumbai":"Maharashtra","Pune":"Maharashtra","Bengaluru":"Karnataka",
+    "Chennai":"Tamil Nadu","Kolkata":"West Bengal","Hyderabad":"Telangana","Kochi":"Kerala","Ahmedabad":"Gujarat",
+    "Jaipur":"Rajasthan","Chandigarh":"Chandigarh","Gurugram":"Haryana","Noida":"Uttar Pradesh","Lucknow":"Uttar Pradesh",
+    "Bhopal":"Madhya Pradesh","Patna":"Bihar","Ranchi":"Jharkhand","Bhubaneswar":"Odisha","Visakhapatnam":"Andhra Pradesh",
+    "Guwahati":"Assam","Dehradun":"Uttarakhand"
+  };
+  const CITY_PRESETS=Object.keys(CITY_TO_STATE).map(name=>{
+    const st=CITY_TO_STATE[name]; const b=STATE_BENCH[st]||{petrol:100,tariff:7};
+    return {id:name.toLowerCase().replace(/\s+/g,'-'),name,petrol:b.petrol,tariff:b.tariff};
+  });
+
+  /* ---------- Helpers ---------- */
+  const $=s=>document.querySelector(s); const $$=(s,c=document)=>Array.from(c.querySelectorAll(s));
+  const inr=n=>(!isFinite(n)||n===Infinity)?"—":new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Math.round(n));
+  function el(tag,attrs={},kids=[]){const e=document.createElement(tag);for(const k in attrs){if(k==="class")e.className=attrs[k];else if(k==="text")e.textContent=attrs[k];else e.setAttribute(k,attrs[k]);}kids.forEach(c=>e.appendChild(c));return e;}
+  function closeAll(){['overlay','shareOverlay','compareOverlay','infoOverlay'].forEach(id=>document.getElementById(id).classList.remove('show'));unlockBg();}
+  function lockBg(){ document.documentElement.style.overflow='hidden'; $('#app').setAttribute('inert',''); }
+  function unlockBg(){ document.documentElement.style.overflow='auto'; $('#app').removeAttribute('inert'); }
+
+  // Super-fast inline placeholder image (no network)
+  function placeholderFor(m){
+    const w=800,h=300; const txt=encodeURIComponent(`${m.brand} ${m.model}`);
+    const bg = (m.type==='car') ? '%230ea5e9' : '%2316a34a';
+    const svg=`<svg xmlns='http://www.w3.org/2000/svg' width='${w}' height='${h}'>
+      <defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='${decodeURIComponent(bg)}' stop-opacity='.85'/><stop offset='1' stop-color='%230b1220' stop-opacity='.85'/></linearGradient></defs>
+      <rect width='100%' height='100%' fill='url(%23g)'/>
+      <text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='42' font-family='Inter, Arial' font-weight='800'>${txt}</text>
+    </svg>`;
+    return `data:image/svg+xml;utf8,${svg}`;
+  }
+  // If you later add /images/{id}.jpg it will auto-use that; otherwise uses placeholder
+  function resolvePhotoSrc(m){
+    const path = `/images/${m.id}.jpg`;
+    const img = new Image(); img.src = path;
+    // optimistic: if it errors, we fallback when loading in <img>
+    return path;
+  }
+
+  /* ---------- State / List ---------- */
+  let tab='cars', q='', active=null; const DATA=()=> tab==='cars'?MODELS_CARS:MODELS_SCOOTERS;
+
+  function renderList(){
+    const items=DATA().filter(m=>{
+      if(!q)return true; const s=(m.brand+" "+m.model+" "+m.segment).toLowerCase();
+      return s.includes(q.toLowerCase());
+    });
+    $('#resultCount').textContent = `${items.length} result${items.length===1?'':'s'}`;
+    const grid=$('#grid'); grid.innerHTML='';
+    items.forEach(m=>{
+      const card=el('button',{class:'card'});
+      const t1=el('div',{text:`${m.brand} ${m.model}`,class:'bold'}); t1.style.fontSize='18px';
+      const t2=el('div',{text:`${m.segment} • ${m.range_km} km est. range`,class:'small muted mt8'});
+      const t3=el('div',{class:'small mt8'}); t3.innerHTML=`<span class="muted">Ex-showroom:</span> <span class="bold" style="color:#15803d">${inr((m.price_lakh||0)*100000)}</span>`;
+      card.append(t1,t2,t3); card.addEventListener('click',()=>openCalc(m)); grid.appendChild(card);
+    });
+  }
+
+  $('#tab-cars').addEventListener('click',()=>{tab='cars'; $('#tab-cars').classList.add('active'); $('#tab-scooters').classList.remove('active'); renderList();});
+  $('#tab-scooters').addEventListener('click',()=>{tab='scooters'; $('#tab-scooters').classList.add('active'); $('#tab-cars').classList.remove('active'); renderList();});
+  $('#q').addEventListener('input',e=>{q=e.target.value; renderList();});
+
+  /* ---------- Calculator wiring (Phase A) ---------- */
+  const overlay=$('#overlay'); const modal=$('#calcModal');
+  const modelSwitch=$('#modelSwitch');
+  const citySel=$('#citySel'), tariffView=$('#tariffView'), petrolIn=$('#petrolIn'), kmR=$('#kmRange'), kmVal=$('#kmVal'), daysR=$('#daysRange'), daysBadge=$('#daysBadge');
+  const perDayEv=$('#perDayEv'), perDayIce=$('#perDayIce'), kmNoteEv=$('#kmNoteEv'), kmNoteIce=$('#kmNoteIce');
+  const monthlyPair=$('#monthlyPair'), yearlyPair=$('#yearlyPair'), saveMonth=$('#saveMonth');
+  const barEvM=$('#barEvM'), barIceM=$('#barIceM'), barEvY=$('#barEvY'), barIceY=$('#barIceY');
+  const gProg=$('#gProg'), gLabel=$('#gLabel'), gSub=$('#gSub'), modelName=$('#modelName'), modelInfo=$('#modelInfo'), goodFit=$('#goodFit');
+  const aiPanel=$('#aiPanel'), aiVerdict=$('#aiVerdict'), aiReasons=$('#aiReasons'), aiAlt=$('#aiAlt'), aiAddShare=$('#aiAddShare');
+  const modelPhoto=$('#modelPhoto');
+
+  CITY_PRESETS.forEach(c=>{const o=el('option',{value:c.id,text:c.name}); citySel.appendChild(o);});
+
+  function fillModelSwitcher(){
+    modelSwitch.innerHTML='';
+    DATA().forEach(m=>{
+      const o=el('option',{value:m.id,text:`${m.brand} ${m.model}`}); modelSwitch.appendChild(o);
+    });
+    if(active) modelSwitch.value = active.id;
+  }
+
+  function openCalc(m){
+    active=m; fillModelSwitcher();
+    // city default
+    const c=CITY_PRESETS.find(x=>x.name==="Gurugram")||CITY_PRESETS[0]||{id:'delhi',tariff:7,petrol:100,name:'Delhi'};
+    citySel.value=c.id; tariffView.textContent=(c.tariff||7).toFixed(1); petrolIn.value=c.petrol||100;
+    kmR.value=20; kmVal.textContent='20'; daysR.value=26; daysBadge.textContent='26 days';
+    modelName.textContent=`${m.brand} ${m.model}`; modelInfo.textContent=`${m.segment} • ${m.range_km} km est. range`;
+    // photo
+    const fallback=placeholderFor(m);
+    const trySrc=resolvePhotoSrc(m);
+    modelPhoto.style.display='block';
+    modelPhoto.src = trySrc;
+    modelPhoto.onerror = ()=>{ modelPhoto.src=fallback; };
+    // reset AI panel
+    aiPanel.style.display='none'; aiPanel.className=''; aiAddShare.checked=false; aiVerdict.textContent='AI analysis'; aiReasons.textContent=''; aiAlt.textContent='';
+    compute();
+    overlay.classList.add('show'); lockBg();
+  }
+
+  // Close interactions
+  function closeCalc(){ overlay.classList.remove('show'); unlockBg(); }
+  $('#closeBtn').addEventListener('click', closeCalc);
+  overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeCalc(); });
+  document.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ closeAll(); }});
+
+  // Swipe-down close (mobile bottom sheet feel)
+  let startY=null, curY=null, swiping=false;
+  modal.addEventListener('touchstart', (e)=>{ if(e.touches.length!==1) return; startY=e.touches[0].clientY; swiping=true; modal.style.transition='none'; });
+  modal.addEventListener('touchmove', (e)=>{ if(!swiping) return; curY=e.touches[0].clientY; const dy=Math.max(0,curY-startY); modal.style.transform=`translateY(${dy}px)`; });
+  modal.addEventListener('touchend', ()=>{ if(!swiping) return; const dy=Math.max(0,(curY||startY)-startY); modal.style.transition='transform .25s ease'; if(dy>100) { modal.style.transform='translateY(100vh)'; setTimeout(closeCalc,180); } else { modal.style.transform='translateY(0)'; } swiping=false; startY=curY=null; });
+
+  // Controls
+  modelSwitch.addEventListener('change', ()=>{
+    const id=modelSwitch.value;
+    const src=[...MODELS_CARS, ...MODELS_SCOOTERS].find(x=>x.id===id);
+    if(src){ openCalc(src); }
+  });
+  citySel.addEventListener('change',()=>{const c=CITY_PRESETS.find(x=>x.id===citySel.value); if(c){tariffView.textContent=c.tariff.toFixed(1); petrolIn.value=c.petrol; compute();}});
+  petrolIn.addEventListener('input',compute);
+  kmR.addEventListener('input',()=>{kmVal.textContent=kmR.value; kmNoteEv.textContent=`For ${kmR.value} km/day`; kmNoteIce.textContent=`For ${kmR.value} km/day`; compute();});
+  daysR.addEventListener('input',()=>{daysBadge.textContent=daysR.value+' days'; compute();});
+
+  function costFor(m){
+    const kmpl = BENCH_KMPL[m.segment] ?? 15;
+    const tariff = parseFloat(tariffView.textContent)||0; const petrol = parseFloat(petrolIn.value)||0;
+    const dailyKm = parseInt(kmR.value,10)||0; const dpm = parseInt(daysR.value,10)||0;
+    const kwhPerKm = (m.eff_kwh_per_100km||0)/100; const evCostPerKm = kwhPerKm*tariff*1.12; const iceCostPerKm = petrol/Math.max(kmpl,1);
+    const perDayEV=evCostPerKm*dailyKm, perDayICE=iceCostPerKm*dailyKm; const mEV=perDayEV*dpm, mICE=perDayICE*dpm;
+    return {kmpl,tariff,petrol,dailyKm,dpm,perDayEV,perDayICE,mEV,mICE,evCostPerKm,iceCostPerKm};
+  }
+
+  function compute(){
+    if(!active) return; const c=costFor(active);
+    perDayEv.textContent=inr(c.perDayEV); perDayIce.textContent=inr(c.perDayICE);
+    kmNoteEv.textContent=`For ${c.dailyKm} km/day`; kmNoteIce.textContent=`For ${c.dailyKm} km/day`;
+    monthlyPair.textContent=`EV ${inr(c.mEV)} • Petrol ${inr(c.mICE)}`; yearlyPair.textContent=`EV ${inr(c.mEV*12)} • Petrol ${inr(c.mICE*12)}`;
+    const totalM=Math.max(c.mEV,c.mICE,1); barEvM.style.width=(c.mEV/totalM*100)+'%'; barIceM.style.width=(c.mICE/totalM*100)+'%';
+    const totalY=Math.max(c.mEV*12,c.mICE*12,1); barEvY.style.width=(c.mEV*12/totalY*100)+'%'; barIceY.style.width=(c.mICE*12/totalY*100)+'%';
+    let pct = (c.perDayICE>0)?((c.perDayICE-c.perDayEV)/c.perDayICE)*100:0; pct=Math.max(-100,Math.min(100,pct));
+    const circ=2*Math.PI*50; const prog=Math.max(0,Math.min(1,pct/100)); const col=pct<0?'#ef4444':(pct<10?'#f59e0b':'#16a34a');
+    gProg.setAttribute('stroke-dasharray',(circ*prog)+' '+(circ-circ*prog)); gProg.setAttribute('stroke',col); gLabel.textContent=(isFinite(pct)?Math.round(pct):0)+'%'; gSub.textContent='Savings vs petrol';
+    saveMonth.textContent=inr(c.mICE-c.mEV); goodFit.style.display=(pct>=20 && (c.mICE-c.mEV)>1500)?'inline-flex':'none';
+    window.__calcCache={...c,monthlySavings:(c.mICE-c.mEV)};
+  }
+
+  /* ---------- Compare carousel (Phase B) ---------- */
+  const compareOv=$('#compareOverlay'), track=$('#compareTrack'), compareClose=$('#compareClose');
+  let slides=[], slideIndex=0;
+
+  function peersFor(sel){
+    const all = sel.type==='car' ? MODELS_CARS : MODELS_SCOOTERS;
+    const price = sel.price_lakh||0;
+    const near = all.filter(x=>x.id!==sel.id && x.segment===sel.segment && Math.abs((x.price_lakh||0)-price) <= price*0.20);
+    const pool = (near.length?near:all.filter(x=>x.id!==sel.id));
+    // rank by monthly EV cost for current scenario
+    const scen=window.__calcCache||{dailyKm:20,dpm:26,tariff:7};
+    function mEv(m){ const kwhPerKm=(m.eff_kwh_per_100km||0)/100; const evKm=kwhPerKm*(scen.tariff||7)*1.12; return (evKm*(scen.dailyKm||20))*(scen.dpm||26); }
+    return pool.map(x=>({m:x, monthlyEV:mEv(x)})).sort((a,b)=>a.monthlyEV-b.monthlyEV).slice(0,8);
+  }
+
+  function openCompare(){
+    if(!active){ alert('Pick a model first'); return; }
+    const peers = peersFor(active);
+    $('#compareSummary').textContent = `Showing ${peers.length} peer${peers.length===1?'':'s'} — same segment, ±20% price (ranked by monthly EV cost).`;
+    track.innerHTML=''; slides = peers.map(({m,monthlyEV})=>{
+      const s=el('div',{class:'slide'});
+      const img=el('img',{style:'width:100%;height:160px;object-fit:cover;border-radius:12px;border:1px solid var(--ring)'});
+      img.src=resolvePhotoSrc(m); img.onerror=()=>{ img.src=placeholderFor(m); };
+      const h=el('h3',{text:`${m.brand} ${m.model}`});
+      const meta=el('div',{class:'small muted',text:`${m.segment} • ${m.range_km} km est. range • ${inr((m.price_lakh||0)*100000)} ex-showroom`});
+      const run=el('div',{class:'small mt8',text:`Monthly EV cost (your scenario): ${inr(monthlyEV)}`});
+      const row=el('div',{class:'row mt12'}); 
+      const setBtn=el('button',{class:'button primary',text:'Set as selection'}); setBtn.addEventListener('click',()=>{ openCalc(m); compareOv.classList.remove('show'); });
+      const openBtn=el('button',{class:'button ghost',text:'Open & compare'}); openBtn.addEventListener('click',()=>{ openCalc(m); });
+      row.append(setBtn, openBtn);
+      s.append(img,h,meta,run,row); return s;
+    });
+    slides.forEach(s=>track.appendChild(s));
+    slideIndex=0; track.style.transform=`translateX(0px)`;
+    compareOv.classList.add('show'); lockBg();
+    preloadNeighbors();
+  }
+  function shift(delta){
+    const max = Math.max(0, slides.length-1);
+    slideIndex = Math.max(0, Math.min(max, slideIndex+delta));
+    const cardW = slides[0]?.getBoundingClientRect().width || 520;
+    const gap = 16;
+    track.style.transform = `translateX(${-(cardW+gap)*slideIndex}px)`;
+    preloadNeighbors();
+  }
+  function preloadNeighbors(){
+    const n=[slideIndex-1,slideIndex+1].filter(i=>i>=0 && i<slides.length);
+    n.forEach(i=>{
+      const img=slides[i].querySelector('img'); const src=img?.src; if(src){ const x=new Image(); x.src=src; }
+    });
+  }
+  $('#compareBtn').addEventListener('click', openCompare);
+  compareClose.addEventListener('click', ()=>{ compareOv.classList.remove('show'); unlockBg(); });
+  compareOv.addEventListener('click',(e)=>{ if(e.target===compareOv){ compareOv.classList.remove('show'); unlockBg(); }});
+  $('#prevSlide').addEventListener('click',()=>shift(-1));
+  $('#nextSlide').addEventListener('click',()=>shift(1));
+  // swipe on track
+  let sx=null, cx=null, sw=false;
+  track.addEventListener('touchstart',e=>{ if(e.touches.length!==1)return; sx=e.touches[0].clientX; sw=true; });
+  track.addEventListener('touchmove',e=>{ if(!sw)return; cx=e.touches[0].clientX; });
+  track.addEventListener('touchend',()=>{ if(!sw)return; const dx=(cx||sx)-sx; if(Math.abs(dx)>40) shift(dx<0?1:-1); sx=cx=null; sw=false; });
+
+  /* ---------- AI (Phase C) ---------- */
+  $('#aiBtn').addEventListener('click', runAiQuick);
+  function priceBand(p){ if(p<=10) return '≤10L'; if(p<=20) return '10–20L'; if(p<=30) return '20–30L'; if(p<=50) return '30–50L'; return '>50L'; }
+  async function runAiQuick(){
+    if(!active){alert('Pick a model first');return;}
+    const scenario=getScenario();
+    // Hard filters: same type, price band peers only
+    const all=[...MODELS_CARS, ...MODELS_SCOOTERS];
+    const sameType=all.filter(m=>m.type===active.type);
+    const band=priceBand(active.price_lakh||0);
+    const peers = sameType.filter(m=>priceBand(m.price_lakh||0)===band || Math.abs((m.price_lakh||0)-(active.price_lakh||0)) <= (active.price_lakh||0)*0.2);
+    aiPanel.style.display='block'; aiPanel.className=''; aiVerdict.textContent='Analyzing…'; aiReasons.textContent=''; aiAlt.textContent=''; window.__aiShareLine='';
+
+    // Try backend; fall back to deterministic
+    try{
+      const r=await fetch('/api/ai/quick',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scenario,models:peers})});
+      if(!r.ok) throw new Error('no backend'); const ai=await r.json(); applyAi(sanitizeAi(ai, active), peers);
+    }catch{
+      const ai=localAi(scenario, peers); applyAi(sanitizeAi(ai, active), peers);
+    }
+  }
+  function sanitizeAi(ai, selected){
+    // Never suggest scooters for cars or vice versa; keep within price reason
+    const band=priceBand(selected.price_lakh||0);
+    if(ai.alt_model_id){
+      const alt=[...MODELS_CARS,...MODELS_SCOOTERS].find(m=>m.id===ai.alt_model_id);
+      if(!alt || alt.type!==selected.type || (priceBand(alt.price_lakh||0)!==band && Math.abs((alt.price_lakh||0)-(selected.price_lakh||0))>(selected.price_lakh||0)*0.2)){
+        ai.alt_model_id='';
+        if(ai.verdict==='try_alternative') ai.verdict='best_pick';
+      }
+    }
+    // Share line must not mention scooters when selected is a car (and vice versa)
+    if(selected.type==='car' && ai.share_line && /scooter/i.test(ai.share_line)) ai.share_line='Strong monthly savings vs petrol';
+    if(selected.type==='scooter' && ai.share_line && /car/i.test(ai.share_line)) ai.share_line='Great city commute economics';
+    return ai;
+  }
+  function applyAi(ai, models){
+    const verdict=ai.verdict||'best_pick'; const reasons=(ai.reasons||[]).slice(0,3); const altId=ai.alt_model_id||'';
+    aiVerdict.textContent = verdict==='best_pick' ? '✅ Best pick' : '👉 Consider an alternative';
+    aiPanel.className = verdict==='best_pick' ? 'good' : 'try';
+    aiPanel.style.display='block';
+    aiReasons.innerHTML = '<ul class="small" style="margin:6px 0 0 18px">'+(reasons.length?reasons.map(r=>`<li>${r}</li>`).join(''):'<li>Based on your scenario and peers</li>')+'</ul>';
+    if(verdict!=='best_pick' && altId){
+      const alt=models.find(m=>m.id===altId); aiAlt.textContent = alt ? `Suggestion: ${alt.brand} ${alt.model}` : '';
+    } else { aiAlt.textContent=''; }
+    window.__aiShareLine = ai.share_line || '';
+  }
+  function getScenario(){
+    const c=window.__calcCache||{};
+    return {
+      id: active.id,
+      kmPerDay:c.dailyKm||parseInt(kmR.value,10)||0,
+      daysPerMonth:c.dpm||parseInt(daysR.value,10)||26,
+      petrolPerL:c.petrol||parseFloat(petrolIn.value)||100,
+      tariff:c.tariff||parseFloat(tariffView.textContent)||7
+    };
+  }
+  function localAi(scenario, models){ // deterministic local suggestion
+    const byId=Object.fromEntries(models.map(m=>[m.id,m])); const sel=byId[scenario.id]||active;
+    const km=+scenario.kmPerDay||0, dpm=+scenario.daysPerMonth||26, petrol=+scenario.petrolPerL||100, tariff=+scenario.tariff||7;
+    function calc(m){ const kmpl=BENCH_KMPL[m.segment]??15; const evPerKm=(m.eff_kwh_per_100km/100)*tariff*1.12; const icePerKm=petrol/Math.max(1,kmpl); const perDayEV=evPerKm*km; const perDayICE=icePerKm*km; return { id:m.id, monthlyEV:perDayEV*dpm, brand:m.brand, model:m.model, price_lakh:m.price_lakh, segment:m.segment, type:m.type }; }
+    const all=models.map(calc); const selected=all.find(x=>x.id===sel.id) || calc(sel);
+    const peers=(all.filter(x=>x.id!==sel.id)).sort((a,b)=>a.monthlyEV-b.monthlyEV);
+    const better=peers.find(p=>p.monthlyEV+1e-6 < selected.monthlyEV);
+    const share = better? `Try ${better.brand} ${better.model}: lower monthly EV cost` : `Best pick in its price band`;
+    return {
+      verdict: better? 'try_alternative' : 'best_pick',
+      alt_model_id: better? better.id : '',
+      reasons: better? ['Lower monthly EV cost in your band'] : ['Your pick is competitive among peers'],
+      share_line: share
+    };
+  }
+
+  /* ---------- Share (kept) ---------- */
+  const shareOv=$('#shareOverlay'), shareCv=$('#shareCanvas'), sctx=shareCv.getContext('2d'); let shareMode='cost';
+  function roundRect(ctx,x,y,w,h,r,fill,stroke){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); if(fill)ctx.fill(); if(stroke)ctx.stroke(); }
+  function badge(x,y,text){ sctx.save(); const pad=14; sctx.font='20px Inter, system-ui'; const w=sctx.measureText(text).width+pad*2; sctx.fillStyle='rgba(203,213,225,.25)'; roundRect(sctx,x,y,w,42,21,true,false); sctx.fillStyle='#e5e7eb'; sctx.fillText(text,x+pad,y+28); sctx.restore(); }
+  function drawShare(){
+    if(!active) return;
+    const c=window.__calcCache||{}; const city=($('#citySel option:checked')||{}).textContent||'—';
+    const w=1080,h=1920; sctx.clearRect(0,0,w,h);
+    const g1=sctx.createLinearGradient(0,0,0,h); g1.addColorStop(0,'#0b1220'); g1.addColorStop(.6,'#0a0f1a'); g1.addColorStop(1,'#080c15'); sctx.fillStyle=g1; sctx.fillRect(0,0,w,h);
+    function logo(x,y){ const lg=sctx.createLinearGradient(x,y,x+40,y+40); lg.addColorStop(0,'#34d399'); lg.addColorStop(1,'#22d3ee'); sctx.strokeStyle=lg; sctx.fillStyle='rgba(52,211,153,.18)'; sctx.lineWidth=3; sctx.beginPath(); sctx.arc(x+20,y+20,20,0,Math.PI*2); sctx.fill(); sctx.stroke(); sctx.fillStyle=lg; sctx.beginPath(); sctx.moveTo(x+28,y+4); sctx.lineTo(x+16,y+28); sctx.lineTo(x+26,y+28); sctx.lineTo(x+14,y+48); sctx.lineTo(x+40,y+22); sctx.lineTo(x+28,y+22); sctx.closePath(); sctx.fill(); }
+    sctx.save(); sctx.translate(56,56); logo(0,0); sctx.fillStyle='#e2e8f0'; sctx.font='700 26px Inter, system-ui'; sctx.fillText('EV Cost Advisor', 64, 28); sctx.restore();
+
+    // header chip
+    sctx.fillStyle='#d1fae5'; sctx.font='20px Inter, system-ui';
+    const cityW=sctx.measureText(city).width+36; roundRect(sctx,1080-56-cityW,56,cityW,44,22,true,true);
+    sctx.fillStyle='#0f172a'; sctx.font='700 18px Inter, system-ui'; sctx.fillText(city,1080-56-cityW+18,56+28);
+
+    const modelLine=`${active.brand} ${active.model}`;
+    sctx.fillStyle='#ffffff'; sctx.font='900 72px Inter, system-ui';
+    const tw=sctx.measureText(modelLine).width; sctx.fillText(modelLine,(1080-tw)/2,360);
+
+    const c2=window.__calcCache||{};
+    sctx.fillStyle='#93c5fd'; sctx.font='26px Inter, system-ui';
+    const sub=`${active.segment} · ${c2.dailyKm||0} km/day · Petrol ₹${Math.round(c2.petrol||0)}/L`;
+    const sw=sctx.measureText(sub).width; sctx.fillText(sub,(1080-sw)/2,406);
+
+    const tile=(y,color,label,value)=>{ sctx.save(); sctx.translate(56,y); sctx.fillStyle=color; roundRect(sctx,0,0,1080-112,210,26,true,false);
+      const sh=sctx.createLinearGradient(0,0,1080-112,0); sh.addColorStop(0,'rgba(255,255,255,.06)'); sh.addColorStop(.3,'rgba(255,255,255,0)'); sh.addColorStop(1,'rgba(255,255,255,0)');
+      sctx.fillStyle=sh; roundRect(sctx,0,0,1080-112,210,26,true,false);
+      sctx.fillStyle='rgba(255,255,255,.9)'; sctx.font='18px Inter, system-ui'; sctx.fillText(label.toUpperCase(),24,48);
+      sctx.fillStyle='#fff'; sctx.font='900 64px Inter, system-ui'; sctx.fillText(value,24,132);
+      sctx.restore();
+    };
+    tile(460,'#059669','Cost per day (EV)', inr(c2.perDayEV||0));
+    tile(710,'#dc2626','Cost per day (Petrol)', inr(c2.perDayICE||0));
+
+    sctx.fillStyle='#cbd5e1'; sctx.font='28px Inter, system-ui'; sctx.fillText('Monthly running cost',56,960);
+    sctx.fillStyle='#a7f3d0'; sctx.font='700 36px Inter, system-ui';
+    sctx.fillText(`EV ${inr(c2.mEV||0)}  •  Petrol ${inr(c2.mICE||0)}`,56,1008);
+
+    sctx.fillStyle='#cbd5e1'; sctx.font='28px Inter, system-ui'; sctx.fillText('Monthly savings',56,1068);
+    sctx.fillStyle='#a7f3d0'; sctx.font='900 54px Inter, system-ui'; sctx.fillText(inr((c2.mICE-c2.mEV)||0),56,1128);
+
+    if($('#aiAddShare').checked && window.__aiShareLine){
+      sctx.fillStyle='#d1fae5'; sctx.font='28px Inter, system-ui'; sctx.fillText(window.__aiShareLine,56,1200);
+    }
+
+    function badge2(x,y,text){ badge(x,y,text); }
+    badge2(56,1260,`${c2.dailyKm||0} km/day`);
+    badge2(300,1260,`${c2.dpm||0} days/mo`);
+    badge2(520,1260,`Petrol ₹${Math.round(c2.petrol||0)}/L`);
+
+    sctx.fillStyle='#94a3b8'; sctx.font='24px Inter, system-ui';
+    sctx.fillText('evcost.in • shareable',56,1920-72);
+    sctx.fillText('© '+(new Date().getFullYear())+' EV Cost Advisor',1080-56-460,1920-72);
+  }
+  function openShareModal(){ closeAll(); shareOv.classList.add('show'); lockBg(); drawShare(); }
+  $('#openShare').addEventListener('click',openShareModal);
+  $('#shareBtn').addEventListener('click',openShareModal);
+  $('#shareClose').addEventListener('click',()=>{ shareOv.classList.remove('show'); unlockBg(); });
+  shareOv.addEventListener('click',(e)=>{ if(e.target===shareOv){ shareOv.classList.remove('show'); unlockBg(); }});
+  $('#dlPng').addEventListener('click',()=>{
+    shareCv.toBlob(b=>{
+      if(!b){alert('Could not render image');return;}
+      const url=URL.createObjectURL(b);
+      const a=document.createElement('a'); a.href=url; a.download="EV-Cost-Card-Mobile.png";
+      const ok=('download' in HTMLAnchorElement.prototype)&&!(/Safari\//.test(navigator.userAgent)&&!/Chrome\//.test(navigator.userAgent));
+      if(ok){document.body.appendChild(a); a.click(); setTimeout(()=>{document.body.removeChild(a); URL.revokeObjectURL(url);},600);}
+      else{window.open(url,'_blank'); setTimeout(()=>URL.revokeObjectURL(url),4000);}
+    },'image/png');
+  });
+  $('#openNew').addEventListener('click',()=>{ shareCv.toBlob(b=>{ if(!b)return; const url=URL.createObjectURL(b); window.open(url,'_blank'); setTimeout(()=>URL.revokeObjectURL(url),4000);},'image/png'); });
+  $('#copyB64').addEventListener('click',()=>{ const b64=shareCv.toDataURL('image/png'); (navigator.clipboard&&navigator.clipboard.writeText)?navigator.clipboard.writeText(b64).then(()=>alert('Base64 copied ✅')).catch(()=>{ prompt('Copy this Base64:', b64); }):prompt('Copy this Base64:', b64); });
+
+  /* ---------- Info ---------- */
+  $('#infoBtn').addEventListener('click',()=>{ closeAll(); $('#infoOverlay').classList.add('show'); lockBg(); });
+  $('#infoClose').addEventListener('click',()=>{ $('#infoOverlay').classList.remove('show'); unlockBg(); });
+  $('#infoOverlay').addEventListener('click',(e)=>{ if(e.target===$('#infoOverlay')) { $('#infoOverlay').classList.remove('show'); unlockBg(); }});
+
+  /* ---------- EMI tools kept minimal: you can hook later ---------- */
+  $('#emiBtn').addEventListener('click',()=>alert('EMI helper lives in the Tools modal in the previous build; keeping this minimal for focus. We can re-add the full tool when needed.'));
+
+  /* ---------- Boot ---------- */
+  renderList();
+})();
+</script>
+</body>
+</html>
