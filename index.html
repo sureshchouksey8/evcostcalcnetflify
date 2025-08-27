@@ -149,19 +149,30 @@
     </div>
   </div>
 
-  <!-- Compare modal -->
+    <!-- Compare modal -->
   <div id="compareOverlay" class="overlay" aria-hidden="true">
     <div class="modal compare-modal" role="dialog" aria-modal="true">
       <div class="modal-head">
         <div class="muted small">Compare similar models</div>
-        <div class="row">
-          <button id="cmpPrev" class="button">◀</button>
-          <button id="cmpNext" class="button">▶</button>
-          <button id="cmpClose" class="button big-x">✕</button>
+        <div class="row" style="gap:8px;align-items:center">
+          <label class="small muted" for="cmpEmiIn">EMI ₹/month</label>
+          <input id="cmpEmiIn" class="input" type="number" style="width:140px" placeholder="12000" />
+          <button id="cmpPrev" class="button" title="Prev">◀</button>
+          <button id="cmpNext" class="button" title="Next">▶</button>
+          <button id="cmpClose" class="button big-x" aria-label="Close">✕</button>
         </div>
       </div>
+
       <div class="modal-body">
-        <div id="cmpTrack" class="cmpTrack"></div>
+        <div class="cmpLayout">
+          <!-- Left: baseline (your current selection) -->
+          <div id="cmpBase" class="cmpCard baseline"></div>
+
+          <!-- Right: swipeable carousel of peers -->
+          <div class="cmpViewport" id="cmpViewport">
+            <div id="cmpTrack" class="cmpTrack"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
