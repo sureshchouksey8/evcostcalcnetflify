@@ -33,7 +33,7 @@
     <div id="grid" class="grid"></div>
   </div>
 
-  <!-- Calculator (mobile: bottom sheet, desktop: centered/sticky modal) -->
+  <!-- Calculator -->
   <div id="overlay" class="overlay" aria-hidden="true">
     <div class="modal calc-modal" role="dialog" aria-modal="true">
       <div class="modal-head">
@@ -122,7 +122,7 @@
           <!-- Right -->
           <div class="right-rail">
             <img id="modelPhoto" alt="" />
-            <!-- Upgraded donut gauge (no overlap) -->
+            <!-- Upgraded donut (no overlap) -->
             <svg class="donut" viewBox="0 0 120 120" aria-hidden="true">
               <defs>
                 <linearGradient id="dg" x1="0" x2="1" y1="0" y2="1">
@@ -138,19 +138,25 @@
               <text id="gSub" x="60" y="80" text-anchor="middle" fill="#475569" font-size="12">Savings vs petrol</text>
             </svg>
 
+            <!-- Better AI card -->
+            <div id="aiPanel" class="aiCard mt8">
+              <div class="aiHeader">
+                <span>✨ AI analysis</span>
+                <span id="aiCity" class="chip"></span>
+              </div>
+              <div id="aiVerdict" class="aiVerdict">—</div>
+              <div id="aiOnroad" class="aiOnroad small mt8">—</div>
+              <ul id="aiReasons" class="aiList mt8"></ul>
+              <div id="aiAlt" class="small mt8"></div>
+              <label class="small mt8" style="display:inline-flex;gap:6px;align-items:center"><input id="aiAddShare" type="checkbox" /> Add AI line to share card</label>
+            </div>
+
             <div class="stat" style="text-align:center">
               <div id="modelName" class="modelTitle">—</div>
               <div id="modelInfo" class="small muted mt8">—</div>
               <div class="small muted mt8">Monthly savings</div>
               <div id="saveMonth" class="bold tabnums mt4" style="font-size:22px">—</div>
               <div id="goodFit" class="good mt8" style="display:none">👍 Good fit</div>
-            </div>
-
-            <div id="aiPanel" class="mt8">
-              <div id="aiVerdict" class="bold">AI analysis</div>
-              <div id="aiReasons" class="small mt8"></div>
-              <div id="aiAlt" class="small mt8"></div>
-              <label class="small mt8" style="display:inline-flex;gap:6px;align-items:center"><input id="aiAddShare" type="checkbox" /> Add AI line to share card</label>
             </div>
 
             <button id="openShare" class="button primary mt12" style="width:100%">Share this scenario</button>
@@ -160,7 +166,7 @@
     </div>
   </div>
 
-  <!-- Compare modal (own palette + scenario strip) -->
+  <!-- Compare modal -->
   <div id="compareOverlay" class="overlay" aria-hidden="true">
     <div class="modal compare-modal" role="dialog" aria-modal="true">
       <div class="modal-head cmp-head">
@@ -197,9 +203,9 @@
     </div>
   </div>
 
-  <!-- Tools modal (EMI + Litres) -->
+  <!-- EMI modal — brand new layout (no more giant white space) -->
   <div id="toolsOverlay" class="overlay" aria-hidden="true">
-    <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal emi-modal" role="dialog" aria-modal="true">
       <div class="modal-head">
         <div class="muted small">EMI & Litres Saved</div>
         <div class="row">
@@ -209,62 +215,41 @@
         </div>
       </div>
       <div class="modal-body">
-        <div class="toolsGrid">
-          <div class="toolTile emi">
-            <h3>EMI helper</h3>
-            <div class="row mt8" style="align-items:center">
-              <svg class="gauge" viewBox="0 0 120 120" style="margin-right:8px">
-                <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="12"/>
+        <div class="emiWrap">
+          <div class="emiLeft">
+            <div class="emiCard cover">
+              <svg class="donut" viewBox="0 0 120 120" aria-hidden="true">
+                <circle cx="60" cy="60" r="46" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="12"/>
                 <g transform="rotate(-90 60 60)">
-                  <circle id="emiProg" cx="60" cy="60" r="50" fill="none" stroke="#ffffff" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 314"/>
+                  <circle id="emiProg" cx="60" cy="60" r="46" fill="none" stroke="#ffffff" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 289"/>
                 </g>
-                <text id="emiLabel" x="60" y="56" text-anchor="middle" fill="#fff" font-size="20" font-weight="800">—</text>
-                <text x="60" y="78" text-anchor="middle" fill="rgba(255,255,255,.95)" font-size="12">EMI coverage</text>
+                <text id="emiLabel" x="60" y="56" text-anchor="middle" fill="#fff" font-size="22" font-weight="800">—</text>
+                <text x="60" y="80" text-anchor="middle" fill="rgba(255,255,255,.95)" font-size="12">EMI coverage</text>
               </svg>
-              <div style="flex:1"></div>
-            </div>
-            <div class="row mt8">
-              <div style="flex:1">
-                <div class="small">Loan amount (₹)</div>
-                <input id="emiAmount" class="input mt8" type="number" placeholder="500000" />
-              </div>
-              <div style="width:140px">
-                <div class="small">Interest %</div>
-                <input id="emiRate" class="input mt8" type="number" step="0.1" placeholder="9.5" />
-              </div>
-              <div style="width:160px">
-                <div class="small">Months</div>
-                <input id="emiMonths" class="input mt8" type="number" placeholder="60" />
+              <div class="coverNumbers">
+                <div><div class="small mutedLight">EMI / month</div><div id="emiOut" class="value tabnums">—</div></div>
+                <div><div class="small mutedLight">Fuel savings / month</div><div id="savingsOut" class="value tabnums">—</div></div>
               </div>
             </div>
-            <div class="row mt16">
-              <div>
-                <div class="small">EMI / month</div>
-                <div id="emiOut" class="value tabnums">—</div>
-              </div>
-              <div>
-                <div class="small">Fuel savings / month</div>
-                <div id="savingsOut" class="value tabnums">—</div>
-              </div>
-            </div>
-            <div id="emiTip" class="small mt12" style="opacity:.9">Enter values to compare your EMI vs monthly fuel savings.</div>
           </div>
 
-          <div class="toolTile litres">
-            <h3>Litres saved / month</h3>
-            <div class="row mt8">
-              <div>
-                <div class="small">Your monthly km</div>
-                <div id="lsKm" class="value tabnums">—</div>
+          <div class="emiRight">
+            <div class="emiCard form">
+              <div class="gridForm">
+                <label>Loan amount (₹)<input id="emiAmount" class="input" type="number" placeholder="500000" /></label>
+                <label>Interest %<input id="emiRate" class="input" type="number" step="0.1" placeholder="9.5" /></label>
+                <label>Months<input id="emiMonths" class="input" type="number" placeholder="60" /></label>
               </div>
-              <div>
-                <div class="small">Segment km/L</div>
-                <div id="lsKmpl" class="value tabnums">—</div>
-              </div>
+              <div id="emiTip" class="small mt12">Enter values to compare your EMI vs monthly fuel savings.</div>
             </div>
-            <div class="mt16">
-              <div class="small">Estimated petrol you avoid each month</div>
-              <div id="lsLitres" class="value tabnums" style="font-size:32px">—</div>
+
+            <div class="emiCard litres">
+              <h3>Litres saved / month</h3>
+              <div class="gridMini">
+                <div><div class="small mutedLight">Your monthly km</div><div id="lsKm" class="value tabnums">—</div></div>
+                <div><div class="small mutedLight">Segment km/L</div><div id="lsKmpl" class="value tabnums">—</div></div>
+              </div>
+              <div class="bigLitres" id="lsLitres">—</div>
             </div>
           </div>
         </div>
