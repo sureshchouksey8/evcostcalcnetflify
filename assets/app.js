@@ -1,4 +1,4 @@
-/* ---------- Helpers ---------- */
+/* ---------- tiny helpers ---------- */
 const $=s=>document.querySelector(s);
 const $$=(s,c=document)=>Array.from(c.querySelectorAll(s));
 const inr=n=>(!isFinite(n)||n===Infinity)?"—":new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(Math.round(n));
@@ -8,10 +8,10 @@ function openOverlay(id){ closeAll(); $(id).classList.add('show'); disableScroll
 function closeOverlay(id){ $(id).classList.remove('show'); disableScroll(false); }
 function closeAll(){ ['overlay','compareOverlay','shareOverlay','toolsOverlay','infoOverlay'].forEach(id=>$('#'+id).classList.remove('show')); disableScroll(false); }
 
-/* ---------- State ---------- */
+/* ---------- state ---------- */
 let tab='cars', q='', active=null, cmpIndex=0;
 
-/* ---------- Scenario ---------- */
+/* ---------- scenario ---------- */
 const getCity = ()=> CITY_PRESETS.find(x=>x.id === $('#citySel').value) || CITY_PRESETS[0];
 function getScenario(){
   const city=getCity();
@@ -27,7 +27,7 @@ function getScenario(){
   };
 }
 
-/* ---------- Cost engine ---------- */
+/* ---------- costs ---------- */
 function evPerKm(model, tariff){ return (model.eff_kwh_per_100km/100)*tariff*1.12; }
 function icePerKm(model, petrol){ const kmpl = BENCH_KMPL[model.segment] ?? 15; return petrol/Math.max(1,kmpl); }
 function computeCosts(model, scenario){
@@ -40,44 +40,16 @@ function computeCosts(model, scenario){
   return {evKm,iceKm,perDayEV,perDayICE,mEV,mICE};
 }
 
-/* ---------- On-road estimate (city aware; rough) ---------- */
-/* Rough rules for EVs (kept simple and transparent). Values are indicative. */
-const ONROAD_RULES = {
-  "Delhi":          {roadTax:0.00, reg:0.01, ins:0.025},
-  "Maharashtra":    {roadTax:0.07, reg:0.01, ins:0.03},
-  "Karnataka":      {roadTax:0.06, reg:0.01, ins:0.03},
-  "Tamil Nadu":     {roadTax:0.05, reg:0.01, ins:0.03},
-  "Telangana":      {roadTax:0.06, reg:0.01, ins:0.03},
-  "Kerala":         {roadTax:0.06, reg:0.01, ins:0.03},
-  "Gujarat":        {roadTax:0.04, reg:0.01, ins:0.03},
-  "Rajasthan":      {roadTax:0.06, reg:0.01, ins:0.03},
-  "Punjab":         {roadTax:0.05, reg:0.01, ins:0.03},
-  "Haryana":        {roadTax:0.00, reg:0.01, ins:0.03},
-  "Uttar Pradesh":  {roadTax:0.03, reg:0.01, ins:0.03},
-  "Madhya Pradesh": {roadTax:0.05, reg:0.01, ins:0.03},
-  "Chandigarh":     {roadTax:0.00, reg:0.01, ins:0.03},
-  "_default":       {roadTax:0.05, reg:0.01, ins:0.03}
-};
-function estimateOnRoad(model, cityName){
-  const ex = (model.price_lakh||0)*100000;
-  const state = CITY_TO_STATE[cityName] || '—';
-  const rule = ONROAD_RULES[state] || ONROAD_RULES._default;
-  const road = ex*rule.roadTax, reg=ex*rule.reg, ins=ex*rule.ins;
-  const onroad = Math.round(ex + road + reg + ins);
-  return {ex,onroad,road,reg,ins,rule,state};
-}
+/* ---------- data access ---------- */
+const DATA=()=> tab==='cars'?MODELS_CARS:MODELS_SCOOTERS;
 
-/* ---------- Data access ---------- */
-function DATA(){ return tab==='cars'?MODELS_CARS:MODELS_SCOOTERS; }
-
-/* ---------- List ---------- */
+/* ---------- list ---------- */
 function renderList(){
   const items=DATA().filter(m=>{
     if(!q)return true; const s=(m.brand+" "+m.model+" "+m.segment).toLowerCase();
     return s.includes(q.toLowerCase());
   });
   $('#resultCount').textContent = `${items.length} result${items.length===1?'':'s'}`;
-
   const grid=$('#grid'); grid.innerHTML='';
   items.forEach(m=>{
     const card=document.createElement('button'); card.className='card';
@@ -91,7 +63,7 @@ function renderList(){
   });
 }
 
-/* ---------- Calculator modal ---------- */
+/* ---------- calculator DOM ---------- */
 const citySel=$('#citySel'), tariffView=$('#tariffView'), petrolIn=$('#petrolIn'),
       kmR=$('#kmRange'), kmVal=$('#kmVal'), daysR=$('#daysRange'), daysBadge=$('#daysBadge');
 const perDayEv=$('#perDayEv'), perDayIce=$('#perDayIce'), kmNoteEv=$('#kmNoteEv'), kmNoteIce=$('#kmNoteIce');
@@ -107,10 +79,22 @@ function initCities(){
   citySel.value = ggn;
   tariffView.textContent = (getCity().tariff||7).toFixed(1);
 }
+
 function fillSwitcher(list, selectedId){
   modelSwitcher.innerHTML = list.map(m=>`<option value="${m.id}">${m.brand} ${m.model}</option>`).join('');
   modelSwitcher.value = selectedId;
 }
+
+function resetAiPanel(){
+  const p=$('#aiPanel'); p.style.display='none'; p.classList.remove('good','try');
+  $('#aiVerdict').textContent='—';
+  $('#aiReasons').innerHTML='';
+  $('#aiAlt').textContent='';
+  $('#aiOnroad').textContent='—';
+  $('#aiCity').textContent='';
+  window.__aiShareLine='';
+}
+
 function openCalc(m){
   active=m;
   const list = DATA(); fillSwitcher(list, m.id);
@@ -120,8 +104,13 @@ function openCalc(m){
   if(!petrolIn.value) petrolIn.value=100;
   if(!kmR.value) kmR.value=20; kmVal.textContent=kmR.value;
   if(!daysR.value) daysR.value=26; daysBadge.textContent=daysR.value+' days';
-  computeAndRender(); openOverlay('#overlay');
+  resetAiPanel();
+  computeAndRender();
+  openOverlay('#overlay');
+  // auto-run AI on open for fresh model/city
+  runAiQuick();
 }
+
 function computeAndRender(){
   if(!active) return;
   const sc = getScenario();
@@ -138,10 +127,8 @@ function computeAndRender(){
   const totalY=Math.max(c.mEV*12,c.mICE*12,1);
   barEvY.style.width=(c.mEV*12/totalY*100)+'%'; barIceY.style.width=(c.mICE*12/totalY*100)+'%';
 
-  let pct = (c.perDayICE>0)?((c.perDayICE-c.perDayEV)/c.perDayICE)*100:0;
-  pct = Math.round(clamp(pct,-100,100));
+  const pct = Math.round(clamp(((c.perDayICE>0)?((c.perDayICE-c.perDayEV)/c.perDayICE)*100:0), -100,100));
   const circ = 2*Math.PI*46, prog = clamp(pct/100,0,1);
-  gProg.style.transition = 'stroke-dasharray .6s ease';
   gProg.setAttribute('stroke-dasharray',(circ*prog)+' '+(circ-circ*prog));
   gLabel.textContent = (isFinite(pct)?pct:0)+'%';
 
@@ -149,11 +136,11 @@ function computeAndRender(){
   saveMonth.textContent = inr(monthlySavings);
   goodFit.style.display = (pct>=20 && monthlySavings>1500)?'inline-flex':'none';
 
-  // cache for EMI/share/compare/AI
+  // cache for other modules
   window.__calcCache = {...sc, ...c, monthlySavings};
 }
 
-/* ---------- Events ---------- */
+/* ---------- events ---------- */
 $('#tab-cars').addEventListener('click',()=>{tab='cars'; $('#tab-cars').classList.add('active'); $('#tab-scooters').classList.remove('active'); renderList();});
 $('#tab-scooters').addEventListener('click',()=>{tab='scooters'; $('#tab-scooters').classList.add('active'); $('#tab-cars').classList.remove('active'); renderList();});
 $('#q').addEventListener('input',e=>{q=e.target.value; renderList();});
@@ -163,10 +150,12 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeAll(); });
 $('#infoBtn').addEventListener('click',()=>openInfo('calc'));
 $('#infoClose').addEventListener('click',()=>closeOverlay('#infoOverlay'));
 
-citySel.addEventListener('change',()=>{tariffView.textContent=(getCity().tariff||7).toFixed(1); computeAndRender();});
-petrolIn.addEventListener('input',computeAndRender);
-kmR.addEventListener('input',()=>{kmVal.textContent=kmR.value; computeAndRender();});
-daysR.addEventListener('input',()=>{daysBadge.textContent=daysR.value+' days'; computeAndRender();});
+function reRunAIIfOpen(){ if($('#aiPanel').style.display!=='none') runAiQuick(); }
+
+citySel.addEventListener('change',()=>{tariffView.textContent=(getCity().tariff||7).toFixed(1); computeAndRender(); reRunAIIfOpen();});
+petrolIn.addEventListener('input',()=>{computeAndRender(); reRunAIIfOpen();});
+kmR.addEventListener('input',()=>{kmVal.textContent=kmR.value; computeAndRender(); reRunAIIfOpen();});
+daysR.addEventListener('input',()=>{daysBadge.textContent=daysR.value+' days'; computeAndRender(); reRunAIIfOpen();});
 
 $('#prevModel').addEventListener('click',()=>{
   const list=DATA(); let i=list.findIndex(x=>x.id===active.id); i=(i-1+list.length)%list.length; openCalc(list[i]);
@@ -178,7 +167,7 @@ modelSwitcher.addEventListener('change',()=>{
   const list=DATA(); const m=list.find(x=>x.id===modelSwitcher.value); if(m) openCalc(m);
 });
 
-/* ---------- Info ---------- */
+/* ---------- info ---------- */
 function openInfo(which){
   const infoContent=$('#infoContent'), title=$('#infoTitle');
   if(which==='emi'){
@@ -190,17 +179,15 @@ function openInfo(which){
   } else {
     title.textContent='How costs are calculated';
     infoContent.innerHTML=`<div class="bold">Simple & transparent</div>
-      <ul class="small">
-        <li><b>EV ₹/km</b> = (kWh/100km ÷ 100) × tariff × 1.12 (GST approx).</li>
-        <li><b>Petrol ₹/km</b> = Petrol ₹/L ÷ segment km/L benchmark.</li>
-        <li>Monthly = Per-day × days/month (default <b>26</b>).</li>
-      </ul>`;
+      <ul class="small"><li><b>EV ₹/km</b> = (kWh/100km ÷ 100) × tariff × 1.12 (GST approx).</li>
+      <li><b>Petrol ₹/km</b> = Petrol ₹/L ÷ segment km/L benchmark.</li>
+      <li>Monthly = Per-day × days/month (default <b>26</b>).</li></ul>`;
   }
   openOverlay('#infoOverlay');
 }
 
-/* ---------- Share (same as before) ---------- */
-$('#shareBtn').addEventListener('click',()=>openShare('cost'));
+/* ---------- share ---------- */
+$('#shareBtn').addEventListener('click',()=>openShare());
 $('#shareClose').addEventListener('click',()=>closeOverlay('#shareOverlay'));
 $('#openNew').addEventListener('click',()=>{ const cv=$('#shareCanvas'); cv.toBlob(b=>{ if(!b)return; const url=URL.createObjectURL(b); window.open(url,'_blank'); setTimeout(()=>URL.revokeObjectURL(url),4000);},'image/png');});
 $('#copyB64').addEventListener('click',()=>{ const b64=$('#shareCanvas').toDataURL('image/png'); (navigator.clipboard?.writeText?navigator.clipboard.writeText(b64):Promise.reject()).catch(()=>{});});
@@ -211,7 +198,8 @@ $('#dlPng').addEventListener('click',()=>{
   },'image/png');
 });
 function openShare(){ openOverlay('#shareOverlay'); drawShare(); }
-function drawShare(){ const s=window.__calcCache||{}; const ctx=$('#shareCanvas').getContext('2d'); const W=1080,H=1920; ctx.clearRect(0,0,W,H);
+function drawShare(){
+  const s=window.__calcCache||{}; const ctx=$('#shareCanvas').getContext('2d'); const W=1080,H=1920; ctx.clearRect(0,0,W,H);
   const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#0b1220'); g.addColorStop(1,'#0a0f1a'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
   ctx.fillStyle='#d1fae5'; ctx.font='900 58px Inter'; const title=(active?`${active.brand} ${active.model}`:'EV Cost'); const tw=ctx.measureText(title).width; ctx.fillText(title,(W-tw)/2,240);
   ctx.fillStyle='#a7f3d0'; ctx.font='28px Inter'; ctx.fillText(`${s.kmPerDay||0} km/day • ${s.daysPerMonth||0} days/mo • Petrol ₹${Math.round(s.petrolPerL||0)}/L`,(W-760)/2,300);
@@ -221,16 +209,23 @@ function drawShare(){ const s=window.__calcCache||{}; const ctx=$('#shareCanvas'
   tile(380,'#059669','Per-day (EV)', inr(s.perDayEV||0)); tile(630,'#dc2626','Per-day (Petrol)', inr(s.perDayICE||0));
   ctx.fillStyle='#cbd5e1'; ctx.font='28px Inter'; ctx.fillText('Monthly running cost',80,900);
   ctx.fillStyle='#a7f3d0'; ctx.font='700 40px Inter'; ctx.fillText(`EV ${inr(s.mEV||0)}  •  Petrol ${inr(s.mICE||0)}`,80,950);
+
+  // add AI share line if opted in
+  if($('#aiAddShare')?.checked && window.__aiShareLine){
+    ctx.fillStyle='#d1fae5'; ctx.font='28px Inter';
+    const msg = window.__aiShareLine;
+    ctx.fillText(msg,80,1020);
+  }
 }
 
-/* ---------- EMI (new UI) ---------- */
+/* ---------- EMI ---------- */
 $('#emiBtn').addEventListener('click',()=>{
   if(!active){alert('Pick a model first');return;}
   fillEMI(); openOverlay('#toolsOverlay');
 });
 $('#toolsClose').addEventListener('click',()=>closeOverlay('#toolsOverlay'));
 $('#toolsInfo').addEventListener('click',()=>openInfo('emi'));
-$('#shareEmi').addEventListener('click',()=>{ closeOverlay('#toolsOverlay'); openShare('emi'); });
+$('#shareEmi').addEventListener('click',()=>{ closeOverlay('#toolsOverlay'); openShare(); });
 
 function emiCalc(P, annualRatePct, months){ const r=(annualRatePct/100)/12; if(months<=0) return 0; if(r===0) return P/months; const a=Math.pow(1+r,months); return P*r*a/(a-1); }
 function fillEMI(){
@@ -248,51 +243,40 @@ function fillEMI(){
   update();
 }
 
-/* ---------- AI analysis (deterministic + on-road) ---------- */
+/* ---------- AI (using assets/ai.js) ---------- */
 $('#aiBtn').addEventListener('click', runAiQuick);
+
 function runAiQuick(){
   if(!active){alert('Pick a model first');return;}
-  const sc=getScenario(); const pool=sc.type==='car'?MODELS_CARS:MODELS_SCOOTERS;
-  const ai=localAi(sc,pool); applyAi(ai,pool);
+  const sc=getScenario();
+  const pool=sc.type==='car'?MODELS_CARS:MODELS_SCOOTERS;
+  // deterministic suggestion + on-road estimate
+  const ai = window.AI.localAi(sc, pool, computeCosts);
+  applyAi(ai, pool);
 }
-function localAi(sc, pool){
-  const sel = pool.find(m=>m.id===sc.id) || pool[0];
-  const priceBand=[sel.price_lakh*0.8, sel.price_lakh*1.2];
-  const peers1=pool.filter(x=>x.id!==sel.id && x.segment===sel.segment && x.price_lakh>=priceBand[0] && x.price_lakh<=priceBand[1]);
-  const peers=(peers1.length?peers1:pool.filter(x=>x.id!==sel.id))
-    .map(m=>({id:m.id,brand:m.brand,model:m.model,mEV:computeCosts(m,sc).mEV}))
-    .sort((a,b)=>a.mEV-b.mEV);
-  const selectedEV=computeCosts(sel,sc).mEV;
-  const better=peers.find(p=>p.mEV < selectedEV);
-  const or=estimateOnRoad(sel, sc.cityName);
-  const reasons = [
-    `~${Math.round((computeCosts(sel,sc).perDayICE - computeCosts(sel,sc).perDayEV))>0? '₹'+Math.round(computeCosts(sel,sc).perDayICE - computeCosts(sel,sc).perDayEV):'₹0'} per-day fuel saving at your inputs`,
-    `${sc.kmPerDay} km/day × ${sc.daysPerMonth} days → monthly EV ${inr(computeCosts(sel,sc).mEV)} vs Petrol ${inr(computeCosts(sel,sc).mICE)}`,
-    `Segment benchmark ${BENCH_KMPL[sel.segment]||15} km/L used for petrol`
-  ];
-  return {
-    verdict: better? 'try_alternative' : 'best_pick',
-    alt_model_id: better?.id || '',
-    reasons,
-    onroad: or
-  };
-}
+
 function applyAi(ai, pool){
   const panel=$('#aiPanel'); panel.style.display='block'; panel.classList.remove('try','good');
   const sc=getScenario(); $('#aiCity').textContent=sc.cityName;
   const verdict=ai.verdict==='best_pick' ? '✅ Best pick' : '👉 Try an alternative';
-  $('#aiVerdict').textContent=verdict;
-  panel.classList.add(ai.verdict==='best_pick'?'good':'');
+  $('#aiVerdict').textContent=verdict; if(ai.verdict==='best_pick') panel.classList.add('good');
+
   const list=$('#aiReasons'); list.innerHTML=''; (ai.reasons||[]).slice(0,3).forEach(r=>{ const li=document.createElement('li'); li.textContent=r; list.appendChild(li); });
-  const or=ai.onroad; $('#aiOnroad').textContent = `On-road (est.) in ${sc.cityName}: ${inr(or.onroad)}  — includes road tax ${Math.round(or.rule.roadTax*100)}%, reg ${Math.round(or.rule.reg*100)}%, insurance ${Math.round(or.rule.ins*100)}%`;
+
+  const or=ai.onroad || window.AI.estimateOnRoad(active, sc.cityName);
+  $('#aiOnroad').textContent = `On-road (est.) in ${sc.cityName}: ${inr(or.onroad)} — includes road tax ${Math.round(or.rule.roadTax*100)}%, reg ${Math.round(or.rule.reg*100)}%, insurance ${Math.round(or.rule.ins*100)}%`;
+
   $('#aiAlt').textContent='';
   if(ai.verdict!=='best_pick' && ai.alt_model_id){
     const alt=(pool||[]).find(m=>m.id===ai.alt_model_id);
     if(alt) $('#aiAlt').textContent=`Suggestion: ${alt.brand} ${alt.model}`;
   }
+
+  // share line exposed to share canvas
+  window.__aiShareLine = ai.share_line || '';
 }
 
-/* ---------- Compare modal ---------- */
+/* ---------- compare ---------- */
 $('#compareBtn').addEventListener('click', openCompare);
 $('#cmpClose').addEventListener('click',()=>closeOverlay('#compareOverlay'));
 $('#cmpPrev').addEventListener('click',()=>shiftCompare(-1));
@@ -311,15 +295,14 @@ function buildCompare(sc){
   const priceBand=[base.price_lakh*0.8, base.price_lakh*1.2];
   let peers = typePool.filter(x=>x.id!==base.id && x.segment===base.segment && x.price_lakh>=priceBand[0] && x.price_lakh<=priceBand[1]);
   if(!peers.length) peers = typePool.filter(x=>x.id!==base.id);
-  peers = peers
-    .map(m=>({model:m, cost:computeCosts(m,sc)}))
-    .sort((a,b)=>a.cost.mEV - b.cost.mEV)
-    .slice(0,6);
+  peers = peers.map(m=>({model:m, cost:computeCosts(m,sc)})).sort((a,b)=>a.cost.mEV - b.cost.mEV).slice(0,6);
   track.appendChild(makeCmpCard(base, computeCosts(base, sc), true, sc));
   peers.forEach((p,i)=>track.appendChild(makeCmpCard(p.model, p.cost, false, sc, i)));
 }
 function makeCmpCard(m, c, isBase, sc, idx=0){
   const card=document.createElement('div'); card.className='cmpCard'; card.style.animationDelay=(idx*60)+'ms';
+  const baseCost = computeCosts(active, sc);
+  const delta = inr(Math.max(0, baseCost.mEV - c.mEV));
   card.innerHTML = `
     <div class="small muted">${isBase?'Baseline':'Peer'}</div>
     <div class="title">${m.brand} ${m.model}</div>
@@ -329,7 +312,7 @@ function makeCmpCard(m, c, isBase, sc, idx=0){
       <div class="cmpPill ice">PER-DAY (PETROL)<br><span class="tabnums" style="font-size:28px">${inr(c.perDayICE)}</span></div>
     </div>
     <div class="cmpStat small"><div class="row"><span>Monthly running cost</span><span class="tabnums">EV ${inr(c.mEV)} • Petrol ${inr(c.mICE)}</span></div></div>
-    <div class="cmpStat small">${isBase?'': (computeCosts(active, sc).mEV - c.mEV>0? 'Saves '+inr(computeCosts(active, sc).mEV - c.mEV)+' /mo vs baseline' : '—')}</div>
+    <div class="cmpStat small">${isBase?'': ('Saves '+delta+' /mo vs baseline')}</div>
     <div class="cmpBtns"></div>
   `;
   const btns=card.querySelector('.cmpBtns');
@@ -348,5 +331,5 @@ function shiftCompare(dir){
   track.scrollTo({left:0, top: Math.floor(cmpIndex/perRow)*targetRow, behavior:'smooth'});
 }
 
-/* ---------- Boot ---------- */
+/* ---------- boot ---------- */
 (function boot(){ initCities(); renderList(); })();
